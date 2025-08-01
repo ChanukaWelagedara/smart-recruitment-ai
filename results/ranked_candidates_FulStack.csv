@@ -1,0 +1,138 @@
+cv_id,score,analysis
+a8002069fa02478eda2bd1682dd9e6feb19e2b20e97b8be2ff0cf71de04c4f73,60,"### 1. OVERALL MATCH SCORE: 60%
+
+The candidate, Amila Wijesinghe, has a strong foundation in computer science and web development, which aligns with the requirements of the Full Stack Engineer position. However, the candidate lacks the required years of experience and some specific technical skills, resulting in a moderate overall match score.
+
+### 2. SKILL ALIGNMENT:
+
+- **Perfectly Matching Skills:**
+  - Proficiency in JavaScript (including React.js)
+  - Experience with Node.js
+  - Familiarity with MongoDB (NoSQL database)
+  - Proficiency with Git and GitHub
+  - Strong problem-solving and debugging skills
+
+- **Partially Matching Skills:**
+  - Knowledge of frontend frameworks (React.js, but not Angular or Vue.js)
+  - Experience with backend technologies (Node.js, but not Django, Flask, or Ruby on Rails)
+  - Understanding of web protocols (implied through experience with web development)
+
+- **Missing Critical Skills:**
+  - 3+ years of experience as a Full Stack Developer
+  - Experience with relational databases (MySQL, PostgreSQL)
+  - Strong experience with testing frameworks (Jest, Mocha, etc.)
+  - Experience with cloud platforms, containerization, and orchestration tools
+  - Experience with DevOps practices and CI/CD pipelines
+
+- **Additional Skills (bonus):**
+  - Proficiency in multiple programming languages (Java, Python, PHP, SQL)
+  - Experience with Next.js and Tailwind CSS
+  - Strong foundation in design and problem-solving
+
+### 3. EXPERIENCE ANALYSIS:
+
+- **Years of Experience Match:** Poor (less than 1 year of experience vs. required 3+ years)
+- **Industry Experience:** Relevant (web development and full stack development)
+- **Role Level Match:** Underqualified (due to lack of experience and some missing technical skills)
+
+### 4. TECHNICAL ASSESSMENT:
+
+- **Programming Languages:** 80% match (proficient in relevant languages like JavaScript, but lacks experience in some backend technologies like Ruby)
+- **Frameworks/Technologies:** 60% match (strong in React.js and Node.js, but lacks experience in other frameworks like Angular, Vue.js, and backend technologies like Django)
+- **Tools and Platforms:** 70% match (proficient in Git and GitHub, but lacks experience in cloud platforms, containerization, and orchestration tools)
+
+### 5. HIRING RECOMMENDATION:
+
+- **Decision:** Maybe
+- **Confidence Level:** Medium
+- **Reasons for recommendation:** While the candidate has a solid foundation in web development and some matching skills, the lack of required experience and certain technical skills raises concerns. However, the candidate's eagerness to learn and grow could make them a potential fit for the role with additional training or mentorship.
+
+### 6. INTERVIEW FOCUS AREAS:
+
+- **Key areas to explore in interview:**
+  - Depth of knowledge in React.js and Node.js
+  - Understanding of web development principles and scalability
+  - Experience with database management and optimization
+  - Ability to learn and adapt to new technologies
+  - Problem-solving skills and approach to debugging
+
+- **Potential concerns to address:**
+  - Lack of experience and how to overcome it
+  - Missing technical skills and willingness to learn
+  - Ability to work in a collaborative environment and contribute to team best practices
+
+- **Questions to ask candidate:**
+  - Can you describe a complex web application you've developed and your role in it?
+  - How do you approach learning new technologies and frameworks?
+  - How would you optimize the performance of a slow web application?
+  - Can you explain your experience with database management and query optimization?
+  - How do you handle conflicts or disagreements within a development team?"
+25a09faf13041dcd4217f796fd15a392a6ca3b227e5f507a8688f5fe0f32a130,60,"### 1. OVERALL MATCH SCORE: 60%
+
+The candidate, Dasuni Wijesuriya, shows promise with a strong educational background and experience in various project developments, but lacks the required years of experience and some specific technical skills mentioned in the job description.
+
+### 2. SKILL ALIGNMENT:
+
+- **Perfectly Matching Skills:**
+  - Full-stack development
+  - Front-end development (ReactJS)
+  - Back-end development (NodeJS)
+  - Database management (MySQL, MongoDB)
+  - Version control (Git)
+  
+- **Partially Matching Skills:**
+  - Experience with RESTful APIs (implied through project experiences but not explicitly mentioned)
+  - Understanding of web protocols (not explicitly mentioned but can be inferred from the use of HTTP in project experiences)
+  
+- **Missing Critical Skills:**
+  - Specific experience with Angular, Vue.js
+  - Experience with backend technologies like Python, Ruby, Django, Flask, Ruby on Rails
+  - Cloud platforms (AWS, Azure, GCP)
+  - Containerization and orchestration tools (Docker, Kubernetes)
+  - Mobile app development or progressive web apps (PWA)
+  - DevOps practices and CI/CD pipelines
+  - Testing frameworks (Jest, Mocha, etc.)
+  
+- **Additional Skills (bonus):**
+  - UI/UX design (Figma)
+  - Data analysis (Jupyter Notebook, Power BI)
+  - Kotlin and Android app development
+
+### 3. EXPERIENCE ANALYSIS:
+
+- **Years of Experience Match:** Poor - The candidate has less than a year of direct industry experience, whereas the job requires 3+ years.
+- **Industry Experience:** Relevant - The candidate's experience is in the IT industry, which aligns with the job requirements.
+- **Role Level Match:** Underqualified - Due to the lack of direct industry experience and some critical technical skills, the candidate appears underqualified for the role.
+
+### 4. TECHNICAL ASSESSMENT:
+
+- **Programming Languages:** 50% - The candidate knows Java, JavaScript, Kotlin, and PHP, but the job requires proficiency in languages used in backend technologies like Python, Ruby, etc.
+- **Frameworks/Technologies:** 40% - The candidate has experience with ReactJS, NodeJS, and Express.js but lacks experience with other required frameworks like Angular, Vue.js, Django, Flask, etc.
+- **Tools and Platforms:** 60% - The candidate is familiar with VsCode, Android Studio, Xampp, Figma, Git, which are relevant, but misses out on experience with cloud platforms, containerization tools, and specific testing frameworks.
+
+### 5. HIRING RECOMMENDATION:
+
+- **Decision:** Maybe
+- **Confidence Level:** Medium
+- **Reasons for Recommendation:** The candidate shows potential with a strong foundation in programming, database management, and web development. However, the lack of required years of experience and specific technical skills are significant concerns. The candidate could be considered for a junior role or an internship to gain the necessary experience and skills, but for the full stack engineer position as described, the candidate falls short.
+
+### 6. INTERVIEW FOCUS AREAS:
+
+- **Key Areas to Explore:**
+  - Depth of knowledge in full-stack development
+  - Experience with RESTful APIs and web protocols
+  - Ability to learn and adapt to new technologies quickly
+  - Understanding of database management and optimization
+  - Experience with version control and collaborative development environments
+  
+- **Potential Concerns to Address:**
+  - Lack of direct industry experience
+  - Limited exposure to some required backend technologies and frameworks
+  - No experience with cloud platforms, containerization, and DevOps practices
+  
+- **Questions to Ask Candidate:**
+  - How do you approach learning new technologies and frameworks?
+  - Can you describe your experience with database management and optimization?
+  - How do you ensure cross-platform optimization for mobile devices in your development projects?
+  - Have you worked in a collaborative environment using version control systems? Can you give an example?
+  - How do you troubleshoot and debug issues in your applications?"
