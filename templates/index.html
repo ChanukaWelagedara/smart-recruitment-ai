@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>AI Interview Bot</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    .chat { margin: 10px 0; }
+    .question { font-weight: bold; }
+    .answer { margin-left: 20px; }
+  </style>
+</head>
+<body>
+  <h2>AI Interview Chat</h2>
+  <label>Email: <input id="email" /></label>
+  <button onclick="startInterview()">Start</button>
+
+  <div id="chat-box"></div>
+
+  <div id="answer-section" style="display:none;">
+    <input id="answer-input" placeholder="Type your answer..." style="width: 100%;" />
+    <button onclick="sendAnswer()">Send</button>
+  </div>
+
+  <script>
+    let qa_history = [];
+
+    async function startInterview() {
+      const email = document.getElementById("email").value;
+      const res = await fetch("/start_interview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showQuestion(data.question);
+        document.getElementById("answer-section").style.display = "block";
+      }
+    }
+
+    function showQuestion(question) {
+      const chat = document.getElementById("chat-box");
+      chat.innerHTML += `<div class="chat question">Q: ${question}</div>`;
+    }
+
+    function showAnswer(answer) {
+      const chat = document.getElementById("chat-box");
+      chat.innerHTML += `<div class="chat answer">A: ${answer}</div>`;
+    }
+
+    async function sendAnswer() {
+      const email = document.getElementById("email").value;
+      const answer = document.getElementById("answer-input").value;
+      const lastQuestion = document.querySelectorAll(".question:last-child")[0].textContent.slice(3);
+
+      qa_history.push({ question: lastQuestion, answer });
+      showAnswer(answer);
+      document.getElementById("answer-input").value = "";
+
+      const res = await fetch("/next_question", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, qa_history })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showQuestion(data.next_question);
+      }
+    }
+  </script>
+</body>
+</html>

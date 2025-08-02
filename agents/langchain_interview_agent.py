@@ -1,4 +1,3 @@
-# agents/langchain_interview_agent.py
 from database.langchain_vector_db import LangChainVectorDB
 from config.langchain_config import LangChainConfig
 
@@ -7,44 +6,55 @@ class LangChainInterviewAgent:
         self.db = LangChainVectorDB()
         self.llm = LangChainConfig.get_llm()
 
-    def generate_questions_from_summary(self, email: str):
+    def start_interview(self, email: str):
         cv_summary = self.db.get_cv_summary_by_email(email)
         if not cv_summary:
             return f"No CV summary found for email: {email}"
 
         prompt = f"""
-        The following is a professional summary of a candidate's CV:
-        
-        {cv_summary}
+You are an expert technical interviewer. Your job is to generate the first interview question based on the candidate's CV.
 
-        Based on this summary, generate **5 personalized technical interview questions** across the following categories:
-        1. Programming Languages
-        2. Frameworks & Tools
-        3. Database & Backend
-        4. Deployment / Environments
-        5. Software Engineering & Version Control
+CV Summary:
+\"\"\"
+{cv_summary}
+\"\"\"
 
-        The questions should be specific, challenging, and context-aware of the candidate's experience. Format them clearly using this example:
+Start by asking a relevant web development interview question, based on the technologies mentioned (e.g., MERN stack, Node.js, MongoDB).
+Only return the question.
+"""
+        try:
+            return self.llm.invoke(prompt).content.strip() if hasattr(self.llm, 'invoke') else self.llm(prompt)
+        except Exception as e:
+            return f"Error starting interview: {str(e)}"
 
-        1. Programming Languages (e.g., Java, Python, C#)
-        "Question here"
+    def continue_interview(self, email: str, qa_history: list):
+        cv_summary = self.db.get_cv_summary_by_email(email)
+        if not cv_summary:
+            return f"No CV summary found for email: {email}"
 
-        → 
+        history_str = ""
+        for i, pair in enumerate(qa_history, 1):
+            q = pair.get("question", "")
+            a = pair.get("answer", "")
+            history_str += f"Q{i}: {q}\nA{i}: {a}\n"
 
-        2. Frameworks & Tools (e.g., Vue.js, Laravel)
-        "Question here"
+        prompt = f"""
+You are an expert technical interviewer continuing an interview with a web developer. 
 
-        →
+Here’s the candidate’s CV Summary:
+\"\"\"
+{cv_summary}
+\"\"\"
 
-        Only return the questions.
-        """
+Here is the conversation so far:
+{history_str}
+
+Now, based on the candidate's last answer, ask the **next technical question**. Go deeper into reasoning, architecture, tools, deployment, etc. 
+Only return the question text.
+"""
 
         try:
-            if hasattr(self.llm, 'invoke'):
-                from langchain_core.messages import HumanMessage
-                response = self.llm.invoke([HumanMessage(content=prompt)])
-                return response.content.strip()
-            else:
-                return self.llm(prompt)  # fallback
+            return self.llm.invoke(prompt).content.strip() if hasattr(self.llm, 'invoke') else self.llm(prompt)
         except Exception as e:
-            return f"Error generating questions: {str(e)}"
+            return f"Error generating next question: {str(e)}"
+

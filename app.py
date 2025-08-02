@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify ,render_template
 import requests
 import os
 from utils.file_utils import download_pdf_from_url
@@ -13,41 +13,6 @@ from agents.langchain_interview_agent import LangChainInterviewAgent
 
 
 app = Flask(__name__)
-
-# NODEJS_API_URL = "http://localhost:3001/api/applications/fetch"  
-
-# def fetch_application_data(application_id):
-#     try:
-#         response = requests.post(NODEJS_API_URL, json={"applicationId": application_id})
-#         response.raise_for_status()
-#         data = response.json()
-#         if data.get("success"):
-#             return data.get("data")
-#         else:
-#             print("Node.js API error:", data.get("message"))
-#             return None
-#     except Exception as e:
-#         print(f"Error calling Node.js API: {e}")
-#         return None
-
-
-NODEJS_API_URL = "http://localhost:3001/api/applications"  # base URL
-
-def fetch_application_data(application_id):
-    try:
-        url = f"{NODEJS_API_URL}/{application_id}"  # use GET instead of POST
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-        if data.get("success"):
-            return data.get("data")
-        else:
-            print("Node.js API error:", data.get("message"))
-            return None
-    except Exception as e:
-        print(f"Error calling Node.js API: {e}")
-        return None
-
 
 def process_application_data(data):
     job_post = data.get("jobPost", {})
@@ -134,20 +99,20 @@ def process_application_data(data):
     results.sort(key=lambda x: x["score"], reverse=True)
     return results
 
+
 @app.route('/trigger_pipeline', methods=['POST'])
 def trigger_pipeline():
     content = request.json
-    application_id = content.get("applicationId")
-    if not application_id:
-        return jsonify({"success": False, "message": "Missing applicationId"}), 400
 
-    data = fetch_application_data(application_id)
-    if not data:
-        return jsonify({"success": False, "message": "Failed to fetch application data"}), 500
+    # Expecting full application data under "data"
+    if not content or not content.get("data"):
+        return jsonify({"success": False, "message": "Missing application data"}), 400
 
+    data = content["data"]  # this contains jobPost, candidateList, etc.
     results = process_application_data(data)
 
     return jsonify({"success": True, "results": results})
+
 
 @app.route('/extract_profile', methods=['POST'])
 def extract_profile():
@@ -244,7 +209,36 @@ def generate_interview_questions():
         "interview_questions": questions
     })
 
+@app.route('/start_interview', methods=['POST'])
+def start_interview():
+    content = request.json
+    email = content.get("email")
+    if not email:
+        return jsonify({"success": False, "message": "Missing email"}), 400
 
+    agent = LangChainInterviewAgent()
+    question = agent.start_interview(email)
+
+    return jsonify({"success": True, "question": question})
+
+
+@app.route('/next_question', methods=['POST'])
+def next_question():
+    content = request.json
+    email = content.get("email")
+    qa_history = content.get("qa_history", [])
+
+    if not email or not qa_history:
+        return jsonify({"success": False, "message": "Missing email or qa_history"}), 400
+
+    agent = LangChainInterviewAgent()
+    next_q = agent.continue_interview(email, qa_history)
+
+    return jsonify({"success": True, "next_question": next_q})
+@app.route('/')
+def home():
+    # Render the interview bot HTML page
+    return render_template('index.html')
 
 
 if __name__ == '__main__':
