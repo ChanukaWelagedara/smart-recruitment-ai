@@ -2,34 +2,41 @@ from .langchain_cv_summary_agent import LangChainCVSummaryAgent
 from .langchain_job_matcher_agent import LangChainJobMatcherAgent
 from .langchain_interview_agent import LangChainInterviewAgent
 from .langchain_email_generation_agent import LangChainEmailGenerationAgent
+from .langchain_cv_info_extractor_agent import LangChainCVInfoExtractorAgent
+from .file_download_agent import FileDownloadAgent
+from .data_privacy_agent import DataPrivacyAgent
+from .task_manager import TaskManager
 
-# Initialize LangChain agents
-cv_agent = LangChainCVSummaryAgent()
-job_matcher = LangChainJobMatcherAgent()
-interview_agent = LangChainInterviewAgent()
-email_agent = LangChainEmailGenerationAgent()
+# Initialize existing agents
+existing_agents = [
+    LangChainCVSummaryAgent(),
+    LangChainJobMatcherAgent(),
+    LangChainInterviewAgent(),
+    LangChainEmailGenerationAgent(),
+    LangChainCVInfoExtractorAgent()
+]
 
-def run_task(task_type, **kwargs):
-    """Central task manager using LangChain agents"""
-    try:
-        if task_type == "summarize_cv":
-            return cv_agent.summarize_cv(kwargs["cv_path"], kwargs.get("linkedin_url"))
-        elif task_type == "match_cv":
-            return job_matcher.match_cv_to_job(kwargs["cv_summary"], kwargs["job_summary"])
-        elif task_type == "mcq_interview":
-            return interview_agent.conduct_mcq_interview(kwargs["cv_summary"])
-        elif task_type == "analyze_interview":
-            return interview_agent.analyze_interview(kwargs["questions"], kwargs["answers"])
-        elif task_type == "send_email":
-            score = kwargs.get("score", 0)
-            match_analysis = kwargs.get("match_analysis", "")
-            return email_agent.generate_email(
-                kwargs["cv_summary"], 
-                kwargs["job_summary"], 
-                score,
-                match_analysis
-            )
-        else:
-            raise ValueError(f"Unknown task type: {task_type}")
-    except Exception as e:
-        return f"Error in task '{task_type}': {str(e)}"
+# Initialize new agents
+infra_agents = [
+    FileDownloadAgent(),
+    DataPrivacyAgent()
+]
+
+# All agents combined
+all_agents = existing_agents + infra_agents
+
+# Create TaskManager instance
+task_manager = TaskManager(all_agents)
+
+def run_task(task_type: str, **kwargs):
+    """
+    Central task manager dispatching to the appropriate agent
+    based on can_handle() and performing the task.
+    """
+    return task_manager.run_task(task_type, kwargs)
+
+def run_full_application_pipeline(job_post: dict, candidates: list):
+    """
+    Use task_manager to orchestrate the full hiring pipeline.
+    """
+    return task_manager.orchestrate_application(job_post, candidates)

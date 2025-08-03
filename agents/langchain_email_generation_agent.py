@@ -1,9 +1,11 @@
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from config.langchain_config import LangChainConfig
+from agents.base_agent import BaseAgent
 
-class LangChainEmailGenerationAgent:
+class LangChainEmailGenerationAgent(BaseAgent):
     def __init__(self):
+        super().__init__("email_generation_agent")
         self.llm = LangChainConfig.get_llm()
 
         self.email_prompt = PromptTemplate(
@@ -57,16 +59,18 @@ Generate the complete email below:
 
         self.chain = LLMChain(llm=self.llm, prompt=self.email_prompt)
 
-    def generate_email(self, job_description, interview_date, candidate_name, candidate_email,
-                       job_title, closing_date):
+    def can_handle(self, task_type: str) -> bool:
+        return task_type == "send_email"
+
+    def perform_task(self, data: dict, context: dict = None):
         try:
             return self.chain.run(
-                job_description=job_description,
-                interview_date=interview_date,
-                candidate_name=candidate_name,
-                candidate_email=candidate_email,
-                job_title=job_title,
-                closing_date=closing_date
+                job_description=data["job_description"],
+                interview_date=data["interview_date"],
+                candidate_name=data["candidate_name"],
+                candidate_email=data["candidate_email"],
+                job_title=data["job_title"],
+                closing_date=data["closing_date"]
             )
         except Exception as e:
             return f"Error generating email: {str(e)}"

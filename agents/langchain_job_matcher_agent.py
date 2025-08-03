@@ -1,19 +1,19 @@
 import re
-from langchain.prompts import PromptTemplate
+from abc import ABC
+from config.langchain_config import LangChainConfig
 
 try:
     from langchain_community.tools import DuckDuckGoSearchRun
 except ImportError:
     DuckDuckGoSearchRun = None
 
-from config.langchain_config import LangChainConfig
+from agents.base_agent import BaseAgent
 
-
-class LangChainJobMatcherAgent:
+class LangChainJobMatcherAgent(BaseAgent):
     def __init__(self):
+        super().__init__("job_matcher_agent")
         self.llm = LangChainConfig.get_llm()
 
-        # Initialize search tool with error handling
         try:
             if DuckDuckGoSearchRun:
                 self.search_tool = DuckDuckGoSearchRun()
@@ -23,10 +23,19 @@ class LangChainJobMatcherAgent:
             print(f"Warning: Could not initialize search tool: {e}")
             self.search_tool = None
 
+    def can_handle(self, task_type: str) -> bool:
+        return task_type == "match_cv"
+
+    def perform_task(self, data: dict, context: dict = None):
+        cv_summary = data.get("cv_summary", "")
+        job_summary = data.get("job_summary", "")
+        if not cv_summary or not job_summary:
+            return {"error": "Missing cv_summary or job_summary"}
+
+        return self.match_cv_to_job(cv_summary, job_summary)
+
     def match_cv_to_job(self, cv_summary: str, job_summary: str):
-        """Match candidate to job using modern LangChain approach"""
         try:
-            # Get current market information
             market_info = ""
             try:
                 if self.search_tool:
@@ -37,7 +46,6 @@ class LangChainJobMatcherAgent:
             except Exception as e:
                 market_info = f"Market research unavailable: {str(e)}"
 
-            # Create comprehensive prompt
             prompt = f"""
 Analyze the compatibility between this candidate and job position:
 
@@ -83,14 +91,11 @@ Please provide a comprehensive matching analysis:
 Provide detailed analysis:
 """
 
-            # Use the same approach as CV summary agent
             if hasattr(self.llm, 'invoke'):
-                # LangChain ChatGroq
                 from langchain_core.messages import HumanMessage
                 response = self.llm.invoke([HumanMessage(content=prompt)])
                 return response.content
             elif hasattr(self.llm, 'chat'):
-                # Direct Groq client
                 response = self.llm.chat.completions.create(
                     messages=[{"role": "user", "content": prompt}],
                     model="llama-3.3-70b-versatile",
