@@ -1,152 +1,45 @@
-from flask import Flask, request, jsonify
-import requests
-import os
-from utils.file_utils import download_pdf_from_url
-from utils.hash_utils import get_file_hash
-from agents.langchain_job_matcher_agent import LangChainJobMatcherAgent, extract_match_score
-from database.langchain_vector_db import LangChainVectorDB
-from agents.central_managing_ai import run_task
-from agents.langchain_cv_info_extractor_agent import LangChainCVInfoExtractorAgent
-from agents.langchain_email_generation_agent import LangChainEmailGenerationAgent
+from flask import Flask, request, jsonify, render_template
 from datetime import datetime, timedelta
-from agents.langchain_interview_agent import LangChainInterviewAgent
+import traceback
 
+from agents.task_manager import TaskManager
+
+from agents.langchain_cv_summary_agent import LangChainCVSummaryAgent
+from agents.langchain_job_matcher_agent import LangChainJobMatcherAgent
+from agents.langchain_interview_agent import LangChainInterviewAgent
+from agents.langchain_email_generation_agent import LangChainEmailGenerationAgent
+from agents.langchain_cv_info_extractor_agent import LangChainCVInfoExtractorAgent
+from agents.file_download_agent import FileDownloadAgent
+from agents.data_privacy_agent import DataPrivacyAgent
+
+# Setup agents
+existing_agents = [
+    LangChainCVSummaryAgent(),
+    LangChainJobMatcherAgent(),
+    LangChainInterviewAgent(),
+    LangChainEmailGenerationAgent(),
+    LangChainCVInfoExtractorAgent(),
+]
+infrastructure_agents = [FileDownloadAgent()]
+safeguard_agents = [DataPrivacyAgent()]
+all_agents = existing_agents + infrastructure_agents + safeguard_agents
+
+# Create instance
+task_manager = TaskManager(all_agents)
 
 app = Flask(__name__)
-
-# NODEJS_API_URL = "http://localhost:3001/api/applications/fetch"  
-
-# def fetch_application_data(application_id):
-#     try:
-#         response = requests.post(NODEJS_API_URL, json={"applicationId": application_id})
-#         response.raise_for_status()
-#         data = response.json()
-#         if data.get("success"):
-#             return data.get("data")
-#         else:
-#             print("Node.js API error:", data.get("message"))
-#             return None
-#     except Exception as e:
-#         print(f"Error calling Node.js API: {e}")
-#         return None
-
-
-NODEJS_API_URL = "http://localhost:3001/api/applications"  # base URL
-
-def fetch_application_data(application_id):
-    try:
-        url = f"{NODEJS_API_URL}/{application_id}"  # use GET instead of POST
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-        if data.get("success"):
-            return data.get("data")
-        else:
-            print("Node.js API error:", data.get("message"))
-            return None
-    except Exception as e:
-        print(f"Error calling Node.js API: {e}")
-        return None
-
-
-def process_application_data(data):
-    job_post = data.get("jobPost", {})
-    candidates = data.get("candidateList", [])
-
-    job_description = job_post.get("jobDescription", "")
-    job_title = job_post.get("jobTitle", "Unknown Job")
-
-    vector_db = LangChainVectorDB()
-    matcher = LangChainJobMatcherAgent()
-
-    results = []
-
-    # Load cached CV summaries by file hash
-    existing_cv_summaries = vector_db.get_all_cv_summaries()
-    hash_to_summary = {
-        cv.get("metadata", {}).get("file_hash"): cv["text"]
-        for cv in existing_cv_summaries
-        if cv.get("metadata", {}).get("file_hash")
-    }
-
-    for candidate in candidates:
-        full_name = f"{candidate.get('firstName','')} {candidate.get('lastName','')}"
-        cv_url = candidate.get("cvURL")
-        email = candidate.get("email", "unknown@example.com")
-        if not cv_url:
-            print(f"Skipping {full_name} - no CV URL")
-            continue
-
-        print(f"Processing CV for {full_name} from {cv_url}")
-
-        # Prepare local path for downloaded CV
-        cv_filename = cv_url.split("/")[-1]
-        local_cv_dir = "data/cv_pdfs"
-        os.makedirs(local_cv_dir, exist_ok=True)
-        local_cv_path = os.path.join(local_cv_dir, cv_filename)
-
-        # Download if not exists
-        if not os.path.exists(local_cv_path):
-            downloaded_path = download_pdf_from_url(cv_url, save_dir=local_cv_dir, filename=cv_filename)
-            if not downloaded_path:
-                print(f"Failed to download CV for {full_name}")
-                continue
-            local_cv_path = downloaded_path
-
-        # Compute hash
-        file_hash = get_file_hash(local_cv_path)
-
-        # Check cached summary
-        if file_hash in hash_to_summary:
-            cv_summary = hash_to_summary[file_hash]
-            print(f"Using cached summary for {full_name}")
-        else:
-            print(f"Summarizing CV for {full_name}")
-            cv_summary = run_task("summarize_cv", cv_path=local_cv_path)
-            if "Error" in cv_summary:
-                print(f"Error summarizing CV for {full_name}: {cv_summary}")
-                continue
-
-            added = vector_db.add_text_document(
-                text=cv_summary,
-                doc_id=email,
-                doc_type="cv_summary",
-                file_hash=file_hash,
-                email=email  
-            )
-            if not added:
-                print(f"Duplicate detected when adding summary for {full_name}")
-
-            hash_to_summary[file_hash] = cv_summary
-
-        print(f"Matching CV to job '{job_title}' for {full_name}")
-        analysis = matcher.match_cv_to_job(cv_summary, job_description)
-        score = extract_match_score(analysis)
-
-        results.append({
-            "candidate_name": full_name,
-            "email": email,
-            "score": score,
-            "analysis": analysis
-        })
-
-    # Sort by score descending
-    results.sort(key=lambda x: x["score"], reverse=True)
-    return results
 
 @app.route('/trigger_pipeline', methods=['POST'])
 def trigger_pipeline():
     content = request.json
-    application_id = content.get("applicationId")
-    if not application_id:
-        return jsonify({"success": False, "message": "Missing applicationId"}), 400
+    if not content or not content.get("data"):
+        return jsonify({"success": False, "message": "Missing application data"}), 400
 
-    data = fetch_application_data(application_id)
-    if not data:
-        return jsonify({"success": False, "message": "Failed to fetch application data"}), 500
+    data = content["data"]
+    job_post = data.get("jobPost", {})
+    candidates = data.get("candidateList", [])
 
-    results = process_application_data(data)
-
+    results = task_manager.orchestrate_application(job_post, candidates)
     return jsonify({"success": True, "results": results})
 
 @app.route('/extract_profile', methods=['POST'])
@@ -156,19 +49,15 @@ def extract_profile():
     if not cv_url:
         return jsonify({"success": False, "message": "Missing cvURL"}), 400
 
-    extractor = LangChainCVInfoExtractorAgent()
-    result = extractor.extract_profile_info(cv_url)
-
+    result = task_manager.run_task("extract_profile_info", {"cv_url": cv_url})
     if result.get("error"):
         return jsonify({"success": False, "message": result["error"], "raw": result.get("raw_response", "")}), 500
 
     return jsonify({"success": True, "profile": result})
 
-
 @app.route('/generate_emails', methods=['POST'])
 def generate_emails():
     data = request.json
-
     required_fields = ["jobId", "jobTitle", "jobDescription", "closingDate", "candidates"]
     for field in required_fields:
         if field not in data:
@@ -188,35 +77,25 @@ def generate_emails():
     interview_date = (closing_date + timedelta(days=7)).strftime('%Y-%m-%d')
     closing_date_str = closing_date.strftime('%Y-%m-%d')
 
-    email_agent = LangChainEmailGenerationAgent()
     generated_emails = []
-
     for candidate in candidates:
-        try:
-            candidate_name = candidate.get("name", "Candidate")
-            candidate_email = candidate.get("email", "unknown@example.com")
+        candidate_name = candidate.get("name", "Candidate")
+        candidate_email = candidate.get("email", "unknown@example.com")
 
-            email_text = email_agent.generate_email(
-                job_description=job_description,
-                interview_date=interview_date,
-                candidate_name=candidate_name,
-                candidate_email=candidate_email,
-                job_title=job_title,
-                closing_date=closing_date_str
-            )
+        email_text = task_manager.run_task("send_email", {
+            "job_description": job_description,
+            "interview_date": interview_date,
+            "candidate_name": candidate_name,
+            "candidate_email": candidate_email,
+            "job_title": job_title,
+            "closing_date": closing_date_str
+        })
 
-            generated_emails.append({
-                "candidate_name": candidate_name,
-                "email": candidate_email,
-                "generated_email": email_text
-            })
-
-        except Exception as e:
-            generated_emails.append({
-                "candidate_name": candidate.get("name", "Unknown"),
-                "email": candidate.get("email", "unknown@example.com"),
-                "error": f"Failed to generate email: {str(e)}"
-            })
+        generated_emails.append({
+            "candidate_name": candidate_name,
+            "email": candidate_email,
+            "generated_email": email_text
+        })
 
     return jsonify({
         "success": True,
@@ -231,21 +110,105 @@ def generate_emails():
 def generate_interview_questions():
     content = request.json
     email = content.get("email")
-    
     if not email:
         return jsonify({"success": False, "message": "Missing email"}), 400
 
-    agent = LangChainInterviewAgent()
-    questions = agent.generate_questions_from_summary(email)
+    questions = task_manager.run_task("generate_interview_questions", {"email": email})
+    return jsonify({"success": True, "email": email, "interview_questions": questions})
 
-    return jsonify({
-        "success": True,
+@app.route('/start_interview', methods=['POST'])
+def start_interview():
+    content = request.json
+    email = content.get("email")
+    if not email:
+        return jsonify({"success": False, "message": "Missing email"}), 400
+
+    # Pass task_type in data dict explicitly
+    result = task_manager.run_task("start_interview", {"task_type": "start_interview", "email": email})
+
+    # The result should be a string question; if it's dict with error, handle it
+    if isinstance(result, dict) and "error" in result:
+        return jsonify({"success": False, "message": result["error"]}), 500
+
+    # Make sure question is a string (if it's an object, try to convert)
+    question_text = result if isinstance(result, str) else str(result)
+
+    return jsonify({"success": True, "question": question_text})
+
+@app.route('/next_question', methods=['POST'])
+def next_question():
+    content = request.json
+    email = content.get("email")
+    qa_history = content.get("qa_history", [])
+
+    if not email or not qa_history:
+        return jsonify({"success": False, "message": "Missing email or qa_history"}), 400
+
+    # Pass task_type explicitly
+    next_q = task_manager.run_task("continue_interview", {
+        "task_type": "continue_interview",
         "email": email,
-        "interview_questions": questions
+        "qa_history": qa_history
     })
 
+    if isinstance(next_q, dict) and "error" in next_q:
+        return jsonify({"success": False, "message": next_q["error"]}), 500
+
+    next_question_text = next_q if isinstance(next_q, str) else str(next_q)
+    return jsonify({"success": True, "next_question": next_question_text})
 
 
+@app.route('/complete_interview', methods=['POST'])
+def complete_interview():
+    try:
+        content = request.json
+        email = content.get("email")
+        qa_history = content.get("qa_history", [])
+
+        if not email:
+            return jsonify({"success": False, "message": "Missing email"}), 400
+
+        completed_qa = task_manager.run_task("conduct_full_interview", {"email": email, "qa_history": qa_history})
+        if isinstance(completed_qa, str):
+            return jsonify({"success": False, "message": completed_qa}), 500
+
+        if not all(q.get("answer", "").strip() for q in completed_qa):
+            return jsonify({"success": False, "message": "Some answers are missing."}), 400
+
+        evaluation = task_manager.run_task("evaluate_interview", {"email": email, "qa_history": completed_qa})
+        if "error" in evaluation:
+            return jsonify({"success": False, "message": evaluation["error"], "raw": evaluation.get("raw_response", "")}), 500
+
+        return jsonify({
+            "success": True,
+            "interview": evaluation.get("questions", []),
+            "score": evaluation.get("total_score"),
+            "feedback": evaluation.get("overall_feedback")
+        })
+
+    except Exception:
+        tb = traceback.format_exc()
+        print("Error in /complete_interview:", tb)
+        return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/trigger')
+def trigger_page():
+    return render_template('trigger_pipeline.html')
+
+@app.route('/extract')
+def extract_page():
+    return render_template('extract_profile.html')
+
+@app.route('/emails')
+def emails_page():
+    return render_template('generate_emails.html')
+
+@app.route('/interview')
+def interview_page():
+    return render_template('interview.html')
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

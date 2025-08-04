@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Interview Bot - Smart AI Hiring System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Navigation Header -->
+  <nav class="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <h1 class="text-white text-xl font-bold">
+              <i class="fas fa-brain mr-2"></i>Smart AI Hiring System
+            </h1>
+          </div>
+        </div>
+        <div class="hidden md:block">
+          <div class="ml-10 flex items-baseline space-x-4">
+            <a href="/" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-home mr-1"></i>Home
+            </a>
+            <a href="/trigger" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-play-circle mr-1"></i>Trigger Pipeline
+            </a>
+            <a href="/extract" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-file-alt mr-1"></i>Extract Profile
+            </a>
+            <a href="/emails" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-envelope mr-1"></i>Generate Emails
+            </a>
+            <a href="/interview" class="bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium">
+              <i class="fas fa-comments mr-1"></i>Interview Bot
+            </a>
+          </div>
+        </div>
+        <!-- Mobile menu button -->
+        <div class="md:hidden">
+          <button type="button" class="bg-blue-700 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Mobile menu -->
+    <div class="md:hidden hidden" id="mobile-menu">
+      <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-blue-700">
+        <a href="/" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-home mr-2"></i>Home
+        </a>
+        <a href="/trigger" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-play-circle mr-2"></i>Trigger Pipeline
+        </a>
+        <a href="/extract" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-file-alt mr-2"></i>Extract Profile
+        </a>
+        <a href="/emails" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-envelope mr-2"></i>Generate Emails
+        </a>
+        <a href="/interview" class="bg-blue-800 text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-comments mr-2"></i>Interview Bot
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+      <!-- Page Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+          <i class="fas fa-comments text-red-600 mr-3"></i>AI Interview Chat
+        </h1>
+        <p class="text-gray-600">Conduct intelligent interviews with AI-powered conversation</p>
+      </div>
+
+      <!-- Start Interview Card -->
+      <div class="bg-white shadow-xl rounded-lg mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">
+            <i class="fas fa-user mr-2 text-blue-500"></i>Candidate Information
+          </h2>
+        </div>
+        
+        <div class="p-6">
+          <div class="flex items-center space-x-4">
+            <div class="flex-1">
+              <label class="block text-sm font-medium text-gray-700 mb-2">Candidate Email</label>
+              <input type="email" id="email" placeholder="candidate@example.com" 
+                     class="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500" />
+            </div>
+            <div class="flex-shrink-0">
+              <button onclick="startInterview()" 
+                      class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 shadow-lg hover:shadow-xl transition-all duration-200">
+                <i class="fas fa-play mr-2"></i>
+                Start Interview
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat Interface -->
+      <div class="bg-white shadow-xl rounded-lg mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">
+            <i class="fas fa-comment-dots mr-2 text-green-500"></i>Interview Conversation
+          </h2>
+        </div>
+        
+        <div class="p-6">
+          <!-- Chat Messages -->
+          <div id="chat-box" class="space-y-4 mb-6 min-h-64 max-h-96 overflow-y-auto bg-gray-50 rounded-lg p-4 border">
+            <div class="text-center text-gray-500 py-8">
+              <i class="fas fa-robot text-4xl mb-4"></i>
+              <p>Enter candidate email and click "Start Interview" to begin</p>
+            </div>
+          </div>
+
+          <!-- Answer Input -->
+          <div id="answer-section" class="hidden">
+            <div class="flex items-center space-x-4">
+              <div class="flex-1">
+                <input type="text" id="answer-input" placeholder="Type your answer..." 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+              </div>
+              <div class="flex-shrink-0">
+                <button onclick="sendAnswer()" 
+                        class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md hover:shadow-lg transition-all duration-200">
+                  <i class="fas fa-paper-plane mr-2"></i>
+                  Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Evaluation Results -->
+      <div id="evaluation" class="bg-white shadow-xl rounded-lg hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">
+            <i class="fas fa-chart-bar mr-2 text-yellow-500"></i>Interview Evaluation
+          </h2>
+        </div>
+        
+        <div class="p-6">
+          <div id="evaluation-content" class="space-y-4">
+            <!-- Evaluation content will be inserted here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Instructions -->
+      <div class="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h3 class="text-lg font-medium text-blue-900 mb-3">
+          <i class="fas fa-info-circle mr-2"></i>How the AI Interview Works
+        </h3>
+        <ul class="text-blue-800 space-y-2">
+          <li class="flex items-start">
+            <i class="fas fa-check-circle text-blue-500 mr-2 mt-1"></i>
+            <span>Enter the candidate's email address to personalize the interview</span>
+          </li>
+          <li class="flex items-start">
+            <i class="fas fa-check-circle text-blue-500 mr-2 mt-1"></i>
+            <span>The AI will ask 5 relevant questions based on the job requirements</span>
+          </li>
+          <li class="flex items-start">
+            <i class="fas fa-check-circle text-blue-500 mr-2 mt-1"></i>
+            <span>Type your answers and press Send or Enter to continue</span>
+          </li>
+          <li class="flex items-start">
+            <i class="fas fa-check-circle text-blue-500 mr-2 mt-1"></i>
+            <span>After all questions, receive detailed evaluation and scoring</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let qa_history = [];
+
+    function toggleMobileMenu() {
+      const mobileMenu = document.getElementById('mobile-menu');
+      mobileMenu.classList.toggle('hidden');
+    }
+
+    async function startInterview() {
+      const email = document.getElementById("email").value.trim();
+      
+      if (!email) {
+        alert('Please enter candidate email');
+        return;
+      }
+      
+      const button = document.querySelector('button[onclick="startInterview()"]');
+      const originalText = button.innerHTML;
+      button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Starting...';
+      button.disabled = true;
+      
+      try {
+        const res = await fetch("/start_interview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          qa_history = [];
+          document.getElementById("chat-box").innerHTML = "";
+          document.getElementById("evaluation").classList.add("hidden");
+          showQuestion(data.question);
+          document.getElementById("answer-section").classList.remove("hidden");
+        } else {
+          alert('Failed to start interview: ' + (data.message || 'Unknown error'));
+        }
+      } catch (error) {
+        alert('Error starting interview: ' + error.message);
+      } finally {
+        button.innerHTML = originalText;
+        button.disabled = false;
+      }
+    }
+
+    function showQuestion(question) {
+      const chat = document.getElementById("chat-box");
+      const questionDiv = document.createElement('div');
+      questionDiv.className = 'flex items-start space-x-3';
+      questionDiv.innerHTML = `
+        <div class="flex-shrink-0">
+          <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+            <i class="fas fa-robot text-white text-sm"></i>
+          </div>
+        </div>
+        <div class="flex-1 bg-blue-100 rounded-lg p-3">
+          <p class="text-blue-900 font-medium">AI Interviewer</p>
+          <p class="text-blue-800 mt-1">${question}</p>
+        </div>
+      `;
+      chat.appendChild(questionDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    function showAnswer(answer) {
+      const chat = document.getElementById("chat-box");
+      const answerDiv = document.createElement('div');
+      answerDiv.className = 'flex items-start space-x-3 justify-end';
+      answerDiv.innerHTML = `
+        <div class="flex-1 bg-gray-200 rounded-lg p-3 max-w-md ml-auto">
+          <p class="text-gray-900 font-medium text-right">You</p>
+          <p class="text-gray-800 mt-1">${answer}</p>
+        </div>
+        <div class="flex-shrink-0">
+          <div class="h-8 w-8 rounded-full bg-gray-500 flex items-center justify-center">
+            <i class="fas fa-user text-white text-sm"></i>
+          </div>
+        </div>
+      `;
+      chat.appendChild(answerDiv);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function sendAnswer() {
+      const email = document.getElementById("email").value;
+      const answer = document.getElementById("answer-input").value.trim();
+      
+      if (!answer) {
+        alert('Please enter your answer');
+        return;
+      }
+      
+      const lastQuestions = document.querySelectorAll("#chat-box .bg-blue-100 p");
+      const lastQuestion = lastQuestions[lastQuestions.length - 1].textContent;
+
+      qa_history.push({ question: lastQuestion, answer });
+      showAnswer(answer);
+      document.getElementById("answer-input").value = "";
+
+      if (qa_history.length >= 5) {
+        await completeInterview(email);
+        return;
+      }
+
+      try {
+        const res = await fetch("/next_question", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, qa_history })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showQuestion(data.next_question);
+        }
+      } catch (error) {
+        alert('Error getting next question: ' + error.message);
+      }
+    }
+
+    async function completeInterview(email) {
+      document.getElementById("answer-section").classList.add("hidden");
+      
+      // Show completion message
+      const chat = document.getElementById("chat-box");
+      const completionDiv = document.createElement('div');
+      completionDiv.className = 'text-center py-4';
+      completionDiv.innerHTML = `
+        <div class="inline-flex items-center text-green-600">
+          <i class="fas fa-spinner fa-spin mr-2"></i>
+          Evaluating your interview responses...
+        </div>
+      `;
+      chat.appendChild(completionDiv);
+      
+      try {
+        const res = await fetch("/complete_interview", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, qa_history })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          displayEvaluation(data);
+          document.getElementById("evaluation").classList.remove("hidden");
+          document.getElementById("evaluation").scrollIntoView({ behavior: 'smooth' });
+        } else {
+          alert("Error: " + (data.message || "Could not evaluate interview"));
+        }
+      } catch (error) {
+        alert("Error completing interview: " + error.message);
+      }
+    }
+
+    function displayEvaluation(data) {
+      const content = document.getElementById("evaluation-content");
+      
+      let html = `
+        <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-6 border border-green-200">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-2xl font-bold text-gray-900">Interview Complete!</h3>
+            <div class="text-right">
+              <div class="text-3xl font-bold text-green-600">${data.score}/100</div>
+              <div class="text-sm text-gray-500">Total Score</div>
+            </div>
+          </div>
+          <div class="bg-white rounded-lg p-4 shadow-sm">
+            <h4 class="font-semibold text-gray-900 mb-2">Overall Feedback:</h4>
+            <p class="text-gray-700">${data.feedback}</p>
+          </div>
+        </div>
+      `;
+
+      html += `<div class="mt-6">
+        <h4 class="text-xl font-semibold text-gray-900 mb-4">Question-wise Analysis:</h4>
+        <div class="space-y-4">`;
+      
+      if (data.interview && Array.isArray(data.interview)) {
+        data.interview.forEach((q, i) => {
+          const scoreColor = (q.score || 0) >= 16 ? 'text-green-600' : (q.score || 0) >= 12 ? 'text-yellow-600' : 'text-red-600';
+          const scoreBg = (q.score || 0) >= 16 ? 'bg-green-50 border-green-200' : (q.score || 0) >= 12 ? 'bg-yellow-50 border-yellow-200' : 'bg-red-50 border-red-200';
+          
+          html += `
+            <div class="border rounded-lg p-4 ${scoreBg}">
+              <div class="flex justify-between items-start mb-3">
+                <h5 class="font-medium text-gray-900">Question ${i+1}</h5>
+                <div class="text-right">
+                  <div class="text-lg font-bold ${scoreColor}">${q.score || "?"}/20</div>
+                </div>
+              </div>
+              <div class="mb-3">
+                <p class="text-sm font-medium text-gray-700 mb-1">Question:</p>
+                <p class="text-gray-600">${q.question}</p>
+              </div>
+              <div class="mb-3">
+                <p class="text-sm font-medium text-gray-700 mb-1">Your Answer:</p>
+                <p class="text-gray-600">${q.answer || "No answer provided"}</p>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-700 mb-1">Feedback:</p>
+                <p class="text-gray-600">${q.feedback || "No feedback available"}</p>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      html += `</div></div>`;
+      content.innerHTML = html;
+    }
+
+    // Allow Enter key to send answer
+    document.getElementById('answer-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        sendAnswer();
+      }
+    });
+  </script>
+</body>
+</html>

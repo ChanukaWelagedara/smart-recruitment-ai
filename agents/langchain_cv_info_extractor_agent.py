@@ -1,19 +1,28 @@
 import os
 import json
 import re
+from agents.base_agent import BaseAgent
 from utils.file_utils import download_pdf_from_url
-from utils.hash_utils import get_file_hash
 from utils.pdf_utils import extract_text_from_pdf
 from config.langchain_config import LangChainConfig
 
-
-class LangChainCVInfoExtractorAgent:
+class LangChainCVInfoExtractorAgent(BaseAgent):
     def __init__(self):
+        super().__init__("cv_info_extractor_agent")
         self.llm = LangChainConfig.get_llm()
 
-    def clean_llm_json(self, text):
+    def can_handle(self, task_type: str) -> bool:
+        return task_type in ["extract_profile_info", "extract_cv_info"]
+
+    def perform_task(self, data: dict, context: dict = None):
+        cv_url = data.get("cv_url")
+        if not cv_url:
+            return {"error": "'cv_url' is required for extracting CV info"}
+        return self.extract_profile_info(cv_url)
+
+    def clean_llm_json(self, text: str) -> str:
         """
-        Removes triple backticks and trims whitespace to extract valid JSON.
+        Remove triple backticks and trim whitespace to extract valid JSON.
         """
         cleaned = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.MULTILINE)
         return cleaned.strip()
@@ -33,12 +42,12 @@ class LangChainCVInfoExtractorAgent:
                 if not file_path:
                     return {"error": "Failed to download CV"}
 
-            # Extract text
+            # Extract text from PDF
             cv_text = extract_text_from_pdf(file_path)
             if not cv_text:
                 return {"error": "Failed to extract text from CV"}
 
-            # Prompt for LLM
+            # Prepare prompt for LLM
             prompt = f"""
 Extract the following fields from the CV content and return a valid JSON object:
 
@@ -53,7 +62,7 @@ CV CONTENT:
 Respond in raw JSON format only. Do NOT include markdown or triple backticks. Use null if any field is missing.
 """
 
-            # LangChain-style client
+            # Use LangChain-style LLM client if available
             if hasattr(self.llm, 'invoke'):
                 from langchain_core.messages import HumanMessage
                 result = self.llm.invoke([HumanMessage(content=prompt)])
@@ -66,7 +75,7 @@ Respond in raw JSON format only. Do NOT include markdown or triple backticks. Us
                         "raw_response": result.content
                     }
 
-            # OpenAI/Groq-style client
+            # Use OpenAI/Groq-style client
             elif hasattr(self.llm, 'chat'):
                 result = self.llm.chat.completions.create(
                     messages=[{"role": "user", "content": prompt}],
