@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart AI Hiring System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Navigation Header -->
+  <nav class="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <h1 class="text-white text-xl font-bold">
+              <i class="fas fa-brain mr-2"></i>Smart AI Hiring System
+            </h1>
+          </div>
+        </div>
+        <div class="hidden md:block">
+          <div class="ml-10 flex items-baseline space-x-4">
+            <a href="/" class="bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium">
+              <i class="fas fa-home mr-1"></i>Home
+            </a>
+            <a href="/trigger" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-play-circle mr-1"></i>Trigger Pipeline
+            </a>
+            <a href="/extract" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-file-alt mr-1"></i>Extract Profile
+            </a>
+            <a href="/emails" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-envelope mr-1"></i>Generate Emails
+            </a>
+            <a href="/interview" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-comments mr-1"></i>Interview Bot
+            </a>
+          </div>
+        </div>
+        <!-- Mobile menu button -->
+        <div class="md:hidden">
+          <button type="button" class="bg-blue-700 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Mobile menu -->
+    <div class="md:hidden hidden" id="mobile-menu">
+      <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-blue-700">
+        <a href="/" class="bg-blue-800 text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-home mr-2"></i>Home
+        </a>
+        <a href="/trigger" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-play-circle mr-2"></i>Trigger Pipeline
+        </a>
+        <a href="/extract" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-file-alt mr-2"></i>Extract Profile
+        </a>
+        <a href="/emails" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-envelope mr-2"></i>Generate Emails
+        </a>
+        <a href="/interview" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-comments mr-2"></i>Interview Bot
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">
+          Welcome to the Smart AI Hiring System
+        </h1>
+        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
+          Streamline your recruitment process with AI-powered tools for candidate evaluation, 
+          profile extraction, email generation, and intelligent interviews.
+        </p>
+      </div>
+
+      <!-- Feature Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Trigger Pipeline Card -->
+        <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300">
+          <div class="p-6">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <i class="fas fa-play-circle text-3xl text-blue-500"></i>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-gray-500 truncate">
+                    Trigger Pipeline
+                  </dt>
+                  <dd class="text-lg font-medium text-gray-900">
+                    Process Applications
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-6 py-3">
+            <div class="text-sm">
+              <a href="/trigger" class="font-medium text-blue-600 hover:text-blue-500">
+                Start Pipeline <i class="fas fa-arrow-right ml-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Extract Profile Card -->
+        <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300">
+          <div class="p-6">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <i class="fas fa-file-alt text-3xl text-green-500"></i>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-gray-500 truncate">
+                    Extract Profile
+                  </dt>
+                  <dd class="text-lg font-medium text-gray-900">
+                    CV Information
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-6 py-3">
+            <div class="text-sm">
+              <a href="/extract" class="font-medium text-green-600 hover:text-green-500">
+                Extract Data <i class="fas fa-arrow-right ml-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Generate Emails Card -->
+        <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300">
+          <div class="p-6">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <i class="fas fa-envelope text-3xl text-purple-500"></i>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-gray-500 truncate">
+                    Generate Emails
+                  </dt>
+                  <dd class="text-lg font-medium text-gray-900">
+                    Interview Invites
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-6 py-3">
+            <div class="text-sm">
+              <a href="/emails" class="font-medium text-purple-600 hover:text-purple-500">
+                Create Emails <i class="fas fa-arrow-right ml-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interview Bot Card -->
+        <div class="bg-white overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow duration-300">
+          <div class="p-6">
+            <div class="flex items-center">
+              <div class="flex-shrink-0">
+                <i class="fas fa-comments text-3xl text-red-500"></i>
+              </div>
+              <div class="ml-5 w-0 flex-1">
+                <dl>
+                  <dt class="text-sm font-medium text-gray-500 truncate">
+                    Interview Bot
+                  </dt>
+                  <dd class="text-lg font-medium text-gray-900">
+                    AI Interviews
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-6 py-3">
+            <div class="text-sm">
+              <a href="/interview" class="font-medium text-red-600 hover:text-red-500">
+                Start Interview <i class="fas fa-arrow-right ml-1"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleMobileMenu() {
+      const mobileMenu = document.getElementById('mobile-menu');
+      mobileMenu.classList.toggle('hidden');
+    }
+  </script>
+</body>
+</html>

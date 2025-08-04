@@ -190,10 +190,25 @@ def complete_interview():
         tb = traceback.format_exc()
         print("Error in /complete_interview:", tb)
         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
-
 @app.route('/')
 def home():
-    return render_template('index.html')
+    return render_template('home.html')
+
+@app.route('/trigger')
+def trigger_page():
+    return render_template('trigger_pipeline.html')
+
+@app.route('/extract')
+def extract_page():
+    return render_template('extract_profile.html')
+
+@app.route('/emails')
+def emails_page():
+    return render_template('generate_emails.html')
+
+@app.route('/interview')
+def interview_page():
+    return render_template('interview.html')
 
 if __name__ == '__main__':
     app.run(port=5000, debug=True)

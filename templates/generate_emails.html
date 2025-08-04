@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate Interview Emails - Smart AI Hiring System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Navigation Header -->
+  <nav class="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-16">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <h1 class="text-white text-xl font-bold">
+              <i class="fas fa-brain mr-2"></i>Smart AI Hiring System
+            </h1>
+          </div>
+        </div>
+        <div class="hidden md:block">
+          <div class="ml-10 flex items-baseline space-x-4">
+            <a href="/" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-home mr-1"></i>Home
+            </a>
+            <a href="/trigger" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-play-circle mr-1"></i>Trigger Pipeline
+            </a>
+            <a href="/extract" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-file-alt mr-1"></i>Extract Profile
+            </a>
+            <a href="/emails" class="bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium">
+              <i class="fas fa-envelope mr-1"></i>Generate Emails
+            </a>
+            <a href="/interview" class="text-gray-300 hover:bg-blue-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">
+              <i class="fas fa-comments mr-1"></i>Interview Bot
+            </a>
+          </div>
+        </div>
+        <!-- Mobile menu button -->
+        <div class="md:hidden">
+          <button type="button" class="bg-blue-700 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Mobile menu -->
+    <div class="md:hidden hidden" id="mobile-menu">
+      <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-blue-700">
+        <a href="/" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-home mr-2"></i>Home
+        </a>
+        <a href="/trigger" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-play-circle mr-2"></i>Trigger Pipeline
+        </a>
+        <a href="/extract" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-file-alt mr-2"></i>Extract Profile
+        </a>
+        <a href="/emails" class="bg-blue-800 text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-envelope mr-2"></i>Generate Emails
+        </a>
+        <a href="/interview" class="text-gray-300 hover:bg-blue-800 hover:text-white block px-3 py-2 rounded-md text-base font-medium">
+          <i class="fas fa-comments mr-2"></i>Interview Bot
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
+    <div class="px-4 py-6 sm:px-0">
+      <!-- Page Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+          <i class="fas fa-envelope text-purple-600 mr-3"></i>Generate Interview Emails
+        </h1>
+        <p class="text-gray-600">Create personalized interview invitation emails for candidates</p>
+      </div>
+
+      <!-- Form Card -->
+      <div class="bg-white shadow-xl rounded-lg">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h2 class="text-lg font-semibold text-gray-900">Email Generation Details</h2>
+        </div>
+        
+        <div class="p-6 space-y-6">
+          <!-- Job Information Section -->
+          <div class="border-b pb-6">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              <i class="fas fa-briefcase mr-2 text-blue-500"></i>Job Information
+            </h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Job ID</label>
+                <input type="text" id="jobId" placeholder="Enter job ID" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Job Title</label>
+                <input type="text" id="jobTitle" placeholder="e.g., Software Engineer" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <i class="fas fa-calendar-alt mr-1 text-red-500"></i>Closing Date
+                </label>
+                <input type="date" id="closingDate" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Job Description</label>
+              <textarea id="jobDescription" rows="4" placeholder="Enter detailed job description..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"></textarea>
+            </div>
+          </div>
+
+          <!-- Candidates Section -->
+          <div>
+            <h3 class="text-lg font-medium text-gray-900 mb-4">
+              <i class="fas fa-users mr-2 text-green-500"></i>Candidate Information
+            </h3>
+            
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Candidates (JSON Array)</label>
+              <div class="relative">
+                <textarea id="candidates" rows="10" 
+                          placeholder='[
+  {
+    "name": "Lithira Silva",
+    "email": "lithira.uthsara123@gmail.com",
+    "score": 85,
+    "rank": 1
+  },
+  {
+    "name": "Kavindu Perera",
+    "email": "kavindu@example.com",
+    "score": 78,
+    "rank": 2
+  }
+]'
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono text-sm"></textarea>
+                <div class="absolute top-2 right-2">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    JSON Format
+                  </span>
+                </div>
+              </div>
+              <p class="mt-2 text-sm text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i>
+                Include candidate details with name, email, and optionally score/rank
+              </p>
+            </div>
+          </div>
+
+          <!-- Generate Button -->
+          <div class="flex justify-center pt-6">
+            <button onclick="generateEmails()" 
+                    class="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 shadow-lg hover:shadow-xl transition-all duration-200">
+              <i class="fas fa-paper-plane mr-2"></i>
+              Generate Interview Emails
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Section -->
+      <div id="results-section" class="mt-8 hidden">
+        <div class="bg-white shadow-xl rounded-lg">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">
+              <i class="fas fa-mail-bulk mr-2 text-purple-500"></i>Generated Emails
+            </h2>
+          </div>
+          <div class="p-6">
+            <div class="bg-gray-50 rounded-lg p-4 border">
+              <pre id="result" class="bg-gray-900 text-green-400 p-4 rounded-md overflow-x-auto text-sm font-mono whitespace-pre-wrap max-h-96 overflow-y-auto"></pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading Animation -->
+      <div id="loading-section" class="mt-8 hidden">
+        <div class="bg-white shadow-xl rounded-lg">
+          <div class="p-8 text-center">
+            <div class="inline-flex items-center">
+              <i class="fas fa-spinner fa-spin text-3xl text-purple-500 mr-4"></i>
+              <div>
+                <h3 class="text-lg font-medium text-gray-900">Generating Personalized Emails</h3>
+                <p class="text-gray-500">Creating interview invitations for candidates...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tips Section -->
+      <div class="mt-8 bg-purple-50 border border-purple-200 rounded-lg p-6">
+        <h3 class="text-lg font-medium text-purple-900 mb-3">
+          <i class="fas fa-lightbulb mr-2"></i>Email Generation Tips
+        </h3>
+        <ul class="text-purple-800 space-y-2">
+          <li class="flex items-start">
+            <i class="fas fa-check-circle text-purple-500 mr-2 mt-1"></i>
+            <span>Provide complete job information for better email personalization</span>
+          </li>
+          <li class="flex items-start">
+            <i class="fas fa-check-circle text-purple-500 mr-2 mt-1"></i>
+            <span>Include candidate scores/ranks to tailor interview priority</span>
+          </li>
+          <li class="flex items-start">
+            <i class="fas fa-check-circle text-purple-500 mr-2 mt-1"></i>
+            <span>Ensure all candidate email addresses are valid</span>
+          </li>
+          <li class="flex items-start">
+            <i class="fas fa-check-circle text-purple-500 mr-2 mt-1"></i>
+            <span>Review generated emails before sending to candidates</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleMobileMenu() {
+      const mobileMenu = document.getElementById('mobile-menu');
+      mobileMenu.classList.toggle('hidden');
+    }
+
+    async function generateEmails() {
+      const button = event.target;
+      const originalText = button.innerHTML;
+      
+      // Show loading state
+      button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Generating...';
+      button.disabled = true;
+      document.getElementById('loading-section').classList.remove('hidden');
+      document.getElementById('results-section').classList.add('hidden');
+
+      try {
+        const jobId = document.getElementById("jobId").value.trim();
+        const jobTitle = document.getElementById("jobTitle").value.trim();
+        const jobDescription = document.getElementById("jobDescription").value.trim();
+        const closingDate = document.getElementById("closingDate").value;
+        const candidatesText = document.getElementById("candidates").value.trim();
+
+        // Validate required fields
+        if (!jobId) {
+          throw new Error('Job ID is required');
+        }
+        if (!jobTitle) {
+          throw new Error('Job Title is required');
+        }
+        if (!jobDescription) {
+          throw new Error('Job Description is required');
+        }
+        if (!candidatesText) {
+          throw new Error('Candidates list is required');
+        }
+
+        // Validate and parse JSON
+        let candidates;
+        try {
+          candidates = JSON.parse(candidatesText);
+        } catch (jsonError) {
+          throw new Error('Invalid JSON format in candidates list. Please check your JSON syntax.');
+        }
+
+        // Validate candidates array
+        if (!Array.isArray(candidates)) {
+          throw new Error('Candidates must be an array');
+        }
+        if (candidates.length === 0) {
+          throw new Error('At least one candidate is required');
+        }
+
+        // Validate each candidate has required fields
+        for (let i = 0; i < candidates.length; i++) {
+          const candidate = candidates[i];
+          if (!candidate.name && !candidate.firstName) {
+            throw new Error(`Candidate ${i + 1}: name or firstName is required`);
+          }
+          if (!candidate.email) {
+            throw new Error(`Candidate ${i + 1}: email is required`);
+          }
+        }
+
+        const res = await fetch('/generate_emails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId, jobTitle, jobDescription, closingDate, candidates })
+        });
+
+        if (!res.ok) {
+          throw new Error(`Server error: ${res.status} - ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        document.getElementById("result").textContent = JSON.stringify(data, null, 2);
+        document.getElementById('results-section').classList.remove('hidden');
+        
+        // Scroll to results
+        document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+        
+      } catch (error) {
+        document.getElementById("result").textContent = "Error: " + error.message;
+        document.getElementById('results-section').classList.remove('hidden');
+      } finally {
+        // Reset button state and hide loading
+        button.innerHTML = originalText;
+        button.disabled = false;
+        document.getElementById('loading-section').classList.add('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
