@@ -4,6 +4,8 @@ langchain-core>=0.1.0
 langchain-community>=0.0.13
 langchain-chroma>=0.1.0
 langchain-groq>=0.1.0
+langchain-text-splitters>=0.0.1
+langchain-huggingface>=0.0.1
 
 # Vector Database
 chromadb>=0.4.0
@@ -28,3 +30,12 @@ flask-cors>=4.0.0
 # Utilities
 python-dotenv>=1.0.0
 requests>=2.31.0
+
+# Machine Learning & Embeddings
+sentence-transformers>=2.2.0
+transformers>=4.21.0
+torch>=1.12.0
+
+# Additional Dependencies
+gunicorn>=20.1.0
+werkzeug>=2.3.0
