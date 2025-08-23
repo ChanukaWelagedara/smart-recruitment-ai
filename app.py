@@ -212,4 +212,4 @@ def interview_page():
 
 if __name__ == '__main__':
     # Bind to 0.0.0.0 so the app is reachable from other machines (VPS host/network)
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
