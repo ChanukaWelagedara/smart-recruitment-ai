@@ -211,4 +211,5 @@ def interview_page():
     return render_template('interview.html')
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    # Bind to 0.0.0.0 so the app is reachable from other machines (VPS host/network)
+    app.run(host='0.0.0.0', port=5000, debug=True)
