@@ -106,10 +106,6 @@ class TaskManager:
         return results
 
 
-# Helper function to run tasks via the global task_manager instance
-
-def run_task(task_type: str, **kwargs):
-   
-    if "task_type" not in kwargs:
-        kwargs["task_type"] = task_type
-    return task_manager.run_task(task_type, kwargs)
+# Note: This module provides the TaskManager class. A global helper
+# run_task is provided in agents.central_managing_ai to route through
+# the application-level task_manager instance.

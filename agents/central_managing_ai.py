@@ -5,15 +5,19 @@ from .langchain_email_generation_agent import LangChainEmailGenerationAgent
 from .langchain_cv_info_extractor_agent import LangChainCVInfoExtractorAgent
 from .file_download_agent import FileDownloadAgent
 from .data_privacy_agent import DataPrivacyAgent
+from .job_post_generation_agent import JobPostGenerationAgent
 from .task_manager import TaskManager
 
 
+
+# Add job post generation agent to existing agents so it can be used via run_task
 existing_agents = [
     LangChainCVSummaryAgent(),
     LangChainJobMatcherAgent(),
     LangChainInterviewAgent(),
     LangChainEmailGenerationAgent(),
-    LangChainCVInfoExtractorAgent()
+    LangChainCVInfoExtractorAgent(),
+    JobPostGenerationAgent(),
 ]
 
 
