@@ -7,7 +7,7 @@ from .file_download_agent import FileDownloadAgent
 from .data_privacy_agent import DataPrivacyAgent
 from .job_post_generation_agent import JobPostGenerationAgent
 from .task_manager import TaskManager
-
+from. langchain_github_summary_agent import LangChainGitHubSummaryAgent
 
 
 # Add job post generation agent to existing agents so it can be used via run_task
@@ -18,6 +18,7 @@ existing_agents = [
     LangChainEmailGenerationAgent(),
     LangChainCVInfoExtractorAgent(),
     JobPostGenerationAgent(),
+    LangChainGitHubSummaryAgent(),
 ]
 
 

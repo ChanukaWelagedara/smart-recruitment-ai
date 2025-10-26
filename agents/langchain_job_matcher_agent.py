@@ -29,12 +29,13 @@ class LangChainJobMatcherAgent(BaseAgent):
     def perform_task(self, data: dict, context: dict = None):
         cv_summary = data.get("cv_summary", "")
         job_summary = data.get("job_summary", "")
-        if not cv_summary or not job_summary:
-            return {"error": "Missing cv_summary or job_summary"}
+        github_summary = data.get("github_summary", "") 
+        if not cv_summary or not job_summary or not github_summary:
+            return {"error": "Missing cv_summary or job_summary or github_summary"}
 
-        return self.match_cv_to_job(cv_summary, job_summary)
+        return self.match_cv_to_job(cv_summary, job_summary, github_summary)
 
-    def match_cv_to_job(self, cv_summary: str, job_summary: str):
+    def match_cv_to_job(self, cv_summary: str, job_summary: str, github_summary: str):
         try:
             market_info = ""
             try:
@@ -51,6 +52,9 @@ Analyze the compatibility between this candidate and job position:
 
 CANDIDATE PROFILE:
 {cv_summary}
+GiTHUB PROFILE:
+GitHub Summary (projects, code quality, contributions, skills):
+{github_summary if github_summary else "GitHub data not available"}
 
 JOB REQUIREMENTS:
 {job_summary}
