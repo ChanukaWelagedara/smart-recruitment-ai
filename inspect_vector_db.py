@@ -25,7 +25,7 @@ def list_vector_db_documents(limit: int = 10):
         print(f"File Hash  : {metadata.get('file_hash', 'N/A')}")
         print(f"Preview    : {content[:200]}...\n")
 
-    print("✅ Done listing documents.")
+    print("Done listing documents.")
 
 if __name__ == "__main__":
     list_vector_db_documents(limit=20)

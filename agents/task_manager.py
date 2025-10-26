@@ -2,17 +2,22 @@ import os
 from database.langchain_vector_db import LangChainVectorDB
 from utils.hash_utils import get_file_hash
 from agents.langchain_job_matcher_agent import extract_match_score
+from agents.langchain_github_summary_agent import LangChainGitHubSummaryAgent  # ✅ fixed import
+
 
 class TaskManager:
     def __init__(self, agents):
         self.agents = agents
+        # Optionally auto-add GitHub agent if missing
+        if not any(isinstance(agent, LangChainGitHubSummaryAgent) for agent in agents):
+            self.agents.append(LangChainGitHubSummaryAgent())
 
     def run_task(self, task_type: str, data: dict = None, context: dict = None):
+        """Run a specific task by delegating to the appropriate agent."""
         data = data or {}
 
-        # Ensure 'task_type' key is present inside data for agent use
-        if "task_type" not in data:
-            data["task_type"] = task_type
+        # Ensure 'task_type' is inside data
+        data.setdefault("task_type", task_type)
 
         for agent in self.agents:
             if agent.can_handle(task_type):
@@ -20,12 +25,15 @@ class TaskManager:
                     return agent.perform_task(data, context)
                 except Exception as e:
                     return {"error": f"Error in task '{task_type}' by agent '{agent.name}': {str(e)}"}
+
         return {"error": f"No agent found to handle task type: {task_type}"}
 
     def orchestrate_application(self, job_post: dict, candidates: list):
+        """Coordinate full hiring workflow: download → summarize → match → email."""
         vector_db = LangChainVectorDB()
         results = []
 
+        # Load cached CV summaries
         existing_cv_summaries = vector_db.get_all_cv_summaries()
         hash_to_summary = {
             cv.get("metadata", {}).get("file_hash"): cv["text"]
@@ -37,17 +45,19 @@ class TaskManager:
         job_title = job_post.get("jobTitle", "Unknown Job")
 
         for candidate in candidates:
-            full_name = f"{candidate.get('firstName', '')} {candidate.get('lastName', '')}"
+            full_name = f"{candidate.get('firstName', '')} {candidate.get('lastName', '')}".strip()
             cv_url = candidate.get("cvURL")
+            github_url = candidate.get("github_url")
             email = candidate.get("email", "unknown@example.com")
 
+            # ---- Step 1: Validate CV ----
             if not cv_url:
-                results.append({"candidate_name": full_name, "error": "No CV URL"})
+                results.append({"candidate_name": full_name, "error": "No CV URL provided"})
                 continue
 
             download_result = self.run_task("download_file", {
                 "url": cv_url,
-                "filename": cv_url.split("/")[-1]
+                "filename": os.path.basename(cv_url)
             })
 
             if "error" in download_result:
@@ -59,6 +69,7 @@ class TaskManager:
                 results.append({"candidate_name": full_name, "error": "Downloaded file missing"})
                 continue
 
+            # ---- Step 2: Summarize CV (cached if exists) ----
             file_hash = get_file_hash(local_cv_path)
             if file_hash in hash_to_summary:
                 cv_summary = hash_to_summary[file_hash]
@@ -67,6 +78,7 @@ class TaskManager:
                 if isinstance(summary_result, dict) and "error" in summary_result:
                     results.append({"candidate_name": full_name, "error": summary_result["error"]})
                     continue
+
                 cv_summary = summary_result
                 vector_db.add_text_document(
                     text=cv_summary,
@@ -77,14 +89,32 @@ class TaskManager:
                 )
                 hash_to_summary[file_hash] = cv_summary
 
+            # ---- Step 3: Run Safeguard ----
             safeguard_result = self.run_task("safeguard_data_check", {"candidate_data": candidate})
             if "error" in safeguard_result:
                 results.append({"candidate_name": full_name, "error": safeguard_result["error"]})
                 continue
 
-            match_result = self.run_task("match_cv", {"cv_summary": cv_summary, "job_summary": job_description})
+            # ---- Step 4: Summarize GitHub ----
+            github_summary = "No GitHub URL provided."
+            if github_url:
+                github_summary_result = self.run_task("summarize_github_profile", {"github_url": github_url})
+                if isinstance(github_summary_result, dict) and "error" in github_summary_result:
+                    github_summary = f"Error: {github_summary_result['error']}"
+                else:
+                    github_summary = github_summary_result
+
+            # ---- Step 5: Job Matching ----
+            #combined_summary = f"{cv_summary}\n\nGITHUB PROFILE:\n{github_summary}"
+            match_result = self.run_task("match_cv", {
+                "cv_summary": cv_summary,
+                "github_summary": github_summary,
+                "job_summary": job_description
+            })
+
             score = extract_match_score(match_result) if isinstance(match_result, str) else 0
 
+            # ---- Step 6: Send Email ----
             email_result = self.run_task("send_email", {
                 "cv_summary": cv_summary,
                 "job_summary": job_description,
@@ -94,22 +124,17 @@ class TaskManager:
                 "closing_date": job_post.get("closingDate", "")
             })
 
+            # ---- Step 7: Append Results ----
             results.append({
                 "candidate_name": full_name,
                 "email": email,
                 "score": score,
                 "match_analysis": match_result,
-                "email_content": email_result
+                #"email_content": email_result,
+                "cv_summary": cv_summary,
+                "github_summary": github_summary
             })
 
+        # Sort candidates by match score descending
         results.sort(key=lambda x: x.get("score", 0), reverse=True)
         return results
-
-
-# Helper function to run tasks via the global task_manager instance
-
-def run_task(task_type: str, **kwargs):
-   
-    if "task_type" not in kwargs:
-        kwargs["task_type"] = task_type
-    return task_manager.run_task(task_type, kwargs)

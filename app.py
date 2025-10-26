@@ -11,6 +11,7 @@ from agents.langchain_email_generation_agent import LangChainEmailGenerationAgen
 from agents.langchain_cv_info_extractor_agent import LangChainCVInfoExtractorAgent
 from agents.file_download_agent import FileDownloadAgent
 from agents.data_privacy_agent import DataPrivacyAgent
+from agents.job_post_generation_agent import JobPostGenerationAgent 
 
 # Setup agents
 existing_agents = [
@@ -19,6 +20,7 @@ existing_agents = [
     LangChainInterviewAgent(),
     LangChainEmailGenerationAgent(),
     LangChainCVInfoExtractorAgent(),
+    JobPostGenerationAgent()
 ]
 infrastructure_agents = [FileDownloadAgent()]
 safeguard_agents = [DataPrivacyAgent()]
@@ -105,6 +107,47 @@ def generate_emails():
         "closing_date": closing_date_str,
         "emails": generated_emails
     })
+
+
+@app.route('/api/generate_job_post', methods=['POST'])
+def generate_job_post():
+    data = request.json or {}
+
+    # Basic validation
+    required = ["job_title", "qualifications", "salary", "responsibilities"]
+    missing = [r for r in required if r not in data]
+    if missing:
+        # allow alternative camelCase names too
+        alt_missing = []
+        for r in missing:
+            camel = ''.join([r.split('_')[0]] + [p.capitalize() for p in r.split('_')[1:]])
+            if camel in data:
+                continue
+            alt_missing.append(r)
+        if alt_missing:
+            return jsonify({"status": "error", "message": f"Missing fields: {', '.join(alt_missing)}"}), 400
+
+    result = task_manager.run_task("generate_job_post", {
+        "job_title": data.get("job_title") or data.get("jobTitle"),
+        "qualifications": data.get("qualifications") or data.get("qualifications"),
+        "salary": data.get("salary"),
+        "responsibilities": data.get("responsibilities") or data.get("responsibilities")
+    })
+
+    # If the agent returned an error dict, forward it
+    if isinstance(result, dict) and result.get("status") == "error":
+        return jsonify(result), 500
+
+    # If agent returned structured response
+    if isinstance(result, dict) and result.get("status") == "success":
+        return jsonify(result)
+
+    # Unexpected return type - try to coerce
+    try:
+        formatted = str(result)
+        return jsonify({"status": "success", "formatted_job_post": formatted})
+    except Exception as e:
+        return jsonify({"status": "error", "message": "Unable to generate job post", "error": str(e)}), 500
 
 @app.route('/generate_interview_questions', methods=['POST'])
 def generate_interview_questions():
