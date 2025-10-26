@@ -2,13 +2,21 @@
 from agents.base_agent import BaseAgent
 from config.langchain_config import LangChainConfig
 from utils.github_scraper import scrape_github_profile
-
+from urllib.parse import urlparse
 
 class LangChainGitHubSummaryAgent(BaseAgent):
     def __init__(self):
         super().__init__("github_summary_agent")
         self.llm = LangChainConfig.get_llm()
 
+    def extract_username(self, github_url: str) -> str:
+        """Extract GitHub username from full URL."""
+        parsed = urlparse(github_url)
+        path_parts = parsed.path.strip("/").split("/")
+        if len(path_parts) >= 1:
+            return path_parts[0]
+        return github_url 
+    
     def can_handle(self, task_type: str) -> bool:
         return task_type in ["summarize_github", "summarize_github_profile"]
 
@@ -16,9 +24,9 @@ class LangChainGitHubSummaryAgent(BaseAgent):
         github_url = data.get("github_url")
         if not github_url:
             return "Error: 'github_url' is required"
-
+        username = self.extract_username(github_url)
         try:
-            github_data = scrape_github_profile(github_url)
+            github_data = scrape_github_profile(username)
         except Exception as e:
             return f"Error scraping GitHub: {str(e)}"
 
