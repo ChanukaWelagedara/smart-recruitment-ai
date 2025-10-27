@@ -273,19 +273,33 @@ def next_question():
             return jsonify({"success": False, "message": result["error"]}), 500
 
        
+        # if result.get("finished"):
+        #     evaluation = result.get("evaluation", {})
+        #     return jsonify({
+        #         "success": True,
+        #         "finished": True,
+        #         "message": result.get("message", "Interview completed."),
+        #         "qa_history": result.get("qa_history", []),
+        #         "evaluation": {
+        #             "total_score": evaluation.get("total_score"),
+        #             "overall_feedback": evaluation.get("overall_feedback"),
+        #             "question_wise": evaluation.get("question_wise", [])
+        #         }
+        #     })
         if result.get("finished"):
             evaluation = result.get("evaluation", {})
             return jsonify({
                 "success": True,
                 "finished": True,
-                "message": result.get("message", "Interview completed."),
+                "message": result.get("message"),
                 "qa_history": result.get("qa_history", []),
                 "evaluation": {
-                    "total_score": evaluation.get("total_score"),
-                    "overall_feedback": evaluation.get("overall_feedback"),
-                    "question_wise": evaluation.get("question_wise", [])
+                    "total_score": evaluation.get("total_score", 0),
+                    "overall_feedback": evaluation.get("overall_feedback", "No feedback generated."),
+                    "question_wise": evaluation.get("questions", [])
                 }
             })
+
 
       
         return jsonify({
