@@ -55,6 +55,13 @@ def match_cvs(vector_db):
             print(result)
 
 
+def run_mcq(vector_db):
+    cv_summaries = vector_db.get_all_cv_summaries()
+    for cv in cv_summaries:
+        print(f"\nGenerating interview for CV: {cv['id']}")
+        interview = run_task("mcq_interview", cv_summary=cv['summary'])
+        print(interview)
+
 def main():
     vector_db = LangChainVectorDB()
     
@@ -68,6 +75,8 @@ def main():
         summarize_cvs(vector_db)
     elif task == "match_cv":
         match_cvs(vector_db)
+    elif task == "interview":
+        run_mcq(vector_db)
     elif task == "match_all":
         match_all_cvs_to_all_jobs()
     else:
