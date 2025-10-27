@@ -179,6 +179,20 @@ def start_interview():
     question_text = result if isinstance(result, str) else str(result)
 
     return jsonify({"success": True, "question": question_text})
+@app.route('/answer_general', methods=['POST'])
+def answer_general():
+    content = request.json or {}
+    email = content.get("email")
+    answer = content.get("answer")
+
+    if not email or answer is None:
+        return jsonify({"success": False, "message": "Missing email or answer"}), 400
+
+    result = task_manager.run_task("answer_general", {"task_type": "answer_general", "email": email, "answer": answer})
+
+    # result expected to be agent dict; forward as-is
+    return jsonify(result)
+
 
 @app.route('/start_general_interview', methods=['POST'])
 def start_general_interview():
@@ -197,19 +211,6 @@ def start_general_interview():
     return jsonify({"success": True, "question": question})
 
 
-@app.route('/answer_general', methods=['POST'])
-def answer_general():
-    content = request.json or {}
-    email = content.get("email")
-    answer = content.get("answer")
-
-    if not email or answer is None:
-        return jsonify({"success": False, "message": "Missing email or answer"}), 400
-
-    result = task_manager.run_task("answer_general", {"task_type": "answer_general", "email": email, "answer": answer})
-
-    # result expected to be agent dict; forward as-is
-    return jsonify(result)
 
 @app.route('/next_question', methods=['POST'])
 def next_question():
