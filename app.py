@@ -12,12 +12,14 @@ from agents.langchain_cv_info_extractor_agent import LangChainCVInfoExtractorAge
 from agents.file_download_agent import FileDownloadAgent
 from agents.data_privacy_agent import DataPrivacyAgent
 from agents.job_post_generation_agent import JobPostGenerationAgent 
+from agents.general_interview_agent import GeneralInterviewAgent
 
 # Setup agents
 existing_agents = [
     LangChainCVSummaryAgent(),
     LangChainJobMatcherAgent(),
     LangChainInterviewAgent(),
+    GeneralInterviewAgent(),
     LangChainEmailGenerationAgent(),
     LangChainCVInfoExtractorAgent(),
     JobPostGenerationAgent()
@@ -177,6 +179,37 @@ def start_interview():
     question_text = result if isinstance(result, str) else str(result)
 
     return jsonify({"success": True, "question": question_text})
+
+@app.route('/start_general_interview', methods=['POST'])
+def start_general_interview():
+    content = request.json or {}
+    email = content.get("email")
+    if not email:
+        return jsonify({"success": False, "message": "Missing email"}), 400
+
+    result = task_manager.run_task("start_general_interview", {"task_type": "start_general_interview", "email": email})
+
+    # Forward agent response
+    if isinstance(result, dict) and result.get("success") is False:
+        return jsonify(result), 500
+
+    question = result.get("question") if isinstance(result, dict) else str(result)
+    return jsonify({"success": True, "question": question})
+
+
+@app.route('/answer_general', methods=['POST'])
+def answer_general():
+    content = request.json or {}
+    email = content.get("email")
+    answer = content.get("answer")
+
+    if not email or answer is None:
+        return jsonify({"success": False, "message": "Missing email or answer"}), 400
+
+    result = task_manager.run_task("answer_general", {"task_type": "answer_general", "email": email, "answer": answer})
+
+    # result expected to be agent dict; forward as-is
+    return jsonify(result)
 
 @app.route('/next_question', methods=['POST'])
 def next_question():
