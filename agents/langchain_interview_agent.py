@@ -102,7 +102,8 @@ class LangChainInterviewAgent(BaseAgent):
                     "message": "Thank you for completing the technical interview!",
                     "qa_history": session["qa_history"],
                     "score": evaluation.get("total_score"),
-                    "feedback": evaluation.get("overall_feedback")
+                    "feedback": evaluation.get("overall_feedback"),
+                    "questions": evaluation.get("questions", [])
                 }
 
             # Otherwise, continue with next question
