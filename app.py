@@ -311,6 +311,7 @@ def next_question():
                 "finished": True,
                 "message": result.get("message"),
                 "qa_history": qa_history,
+                "score": result.get("score"),
                 "feedback": result.get("feedback")
             })
 
