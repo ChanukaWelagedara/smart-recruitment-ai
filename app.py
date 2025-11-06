@@ -62,7 +62,9 @@ def extract_profile():
 @app.route('/generate_emails', methods=['POST'])
 def generate_emails():
     data = request.json
-    required_fields = ["jobId", "jobTitle", "jobDescription", "closingDate", "candidates"]
+
+    # Required fields
+    required_fields = ["jobId", "jobTitle", "jobDescription", "closingDate", "candidates", "companyName", "contactInfo"]
     for field in required_fields:
         if field not in data:
             return jsonify({"success": False, "message": f"Missing field: {field}"}), 400
@@ -72,13 +74,19 @@ def generate_emails():
     job_description = data["jobDescription"]
     closing_date_raw = data["closingDate"]
     candidates = data["candidates"]
+    company_name = data["companyName"]
+    contact_info = data["contactInfo"]
 
+    # Parse closing date
     try:
         closing_date = datetime.fromisoformat(closing_date_raw.replace("Z", ""))
     except ValueError:
         return jsonify({"success": False, "message": "Invalid closingDate format"}), 400
 
-    interview_date = (closing_date + timedelta(days=7)).strftime('%Y-%m-%d')
+    # Use provided interviewDate if available, else default to closing_date + 7 days
+    interview_date = data.get("interviewDate")
+    if not interview_date:
+        interview_date = (closing_date + timedelta(days=7)).strftime('%Y-%m-%d')
     closing_date_str = closing_date.strftime('%Y-%m-%d')
 
     generated_emails = []
@@ -92,7 +100,9 @@ def generate_emails():
             "candidate_name": candidate_name,
             "candidate_email": candidate_email,
             "job_title": job_title,
-            "closing_date": closing_date_str
+            "closing_date": closing_date_str,
+            "company_name": company_name,
+            "contact_info": contact_info
         })
 
         generated_emails.append({
@@ -107,6 +117,8 @@ def generate_emails():
         "job_title": job_title,
         "interview_date": interview_date,
         "closing_date": closing_date_str,
+        "company_name": company_name,
+        "contact_info": contact_info,
         "emails": generated_emails
     })
 

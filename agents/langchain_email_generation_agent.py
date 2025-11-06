@@ -15,7 +15,9 @@ class LangChainEmailGenerationAgent(BaseAgent):
                 "candidate_name",
                 "candidate_email",
                 "job_title",
-                "closing_date"
+                "closing_date",
+                "company_name",
+                "contact_info"
             ],
             template="""
 You are an HR assistant writing a professional email from the company to the candidate regarding their job application.
@@ -28,8 +30,10 @@ Interview Date: {interview_date}
 Application Closing Date: {closing_date}
 Candidate Name: {candidate_name}
 Candidate Email: {candidate_email}
+Company Name: {company_name}
+Contact Information: {contact_info}
 
-Write a formal recruitment email inviting the candidate to an interview on the scheduled interview date.
+Write a formal recruitment email inviting the candidate to an interview on {interview_date}.
 
 Include:
 - A polite greeting
@@ -50,8 +54,8 @@ Dear {candidate_name},
 
 Best regards,
 Hiring Manager
-[Company Name]
-[Contact Information]
+{company_name}
+{contact_info}
 
 Generate the complete email below:
 """
@@ -70,7 +74,10 @@ Generate the complete email below:
                 candidate_name=data["candidate_name"],
                 candidate_email=data["candidate_email"],
                 job_title=data["job_title"],
-                closing_date=data["closing_date"]
+                closing_date=data["closing_date"],
+                company_name=data["company_name"],
+                contact_info=data["contact_info"],
+                
             )
         except Exception as e:
             return f"Error generating email: {str(e)}"
