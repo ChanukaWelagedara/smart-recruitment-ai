@@ -12,7 +12,7 @@ from agents.file_download_agent import FileDownloadAgent
 from agents.data_privacy_agent import DataPrivacyAgent
 from agents.job_post_generation_agent import JobPostGenerationAgent
 from agents.general_interview_agent import GeneralInterviewAgent
-
+import traceback
 # Setup agents
 existing_agents = [
     LangChainCVSummaryAgent(),
@@ -183,15 +183,41 @@ def generate_interview_questions():
         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
 
 
+# @app.route('/start_interview', methods=['POST'])
+# def start_interview():
+#     try:
+#         content = request.json or {}
+#         email = content.get("email")
+#         if not email:
+#             return jsonify({"success": False, "message": "Missing email"}), 400
+
+#         result = task_manager.run_task("start_interview", {"task_type": "start_interview", "email": email})
+#         if isinstance(result, dict) and "error" in result:
+#             return jsonify({"success": False, "message": result["error"]}), 500
+
+#         return jsonify({"success": True, "question": str(result)})
+#     except Exception:
+#         tb = traceback.format_exc()
+#         print("Error in /start_interview:", tb)
+#         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
+
+
 @app.route('/start_interview', methods=['POST'])
 def start_interview():
     try:
         content = request.json or {}
         email = content.get("email")
+        job_description = content.get("job_description", "")
+
         if not email:
             return jsonify({"success": False, "message": "Missing email"}), 400
 
-        result = task_manager.run_task("start_interview", {"task_type": "start_interview", "email": email})
+        result = task_manager.run_task("start_interview", {
+            "task_type": "start_interview",
+            "email": email,
+            "job_description": job_description
+        })
+
         if isinstance(result, dict) and "error" in result:
             return jsonify({"success": False, "message": result["error"]}), 500
 
@@ -200,7 +226,6 @@ def start_interview():
         tb = traceback.format_exc()
         print("Error in /start_interview:", tb)
         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
-
 
 
 @app.route('/next_question', methods=['POST'])
@@ -222,6 +247,35 @@ def next_question():
         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
 
 
+# @app.route('/complete_interview', methods=['POST'])
+# def complete_interview():
+#     try:
+#         content = request.json or {}
+#         email, qa_history = content.get("email"), content.get("qa_history", [])
+#         if not email:
+#             return jsonify({"success": False, "message": "Missing email"}), 400
+
+#         completed_qa = task_manager.run_task("conduct_full_interview", {"email": email, "qa_history": qa_history})
+#         if isinstance(completed_qa, str):
+#             return jsonify({"success": False, "message": completed_qa}), 500
+
+#         if not all(q.get("answer", "").strip() for q in completed_qa):
+#             return jsonify({"success": False, "message": "Some answers are missing."}), 400
+
+#         evaluation = task_manager.run_task("evaluate_interview", {"email": email, "qa_history": completed_qa})
+#         if "error" in evaluation:
+#             return jsonify({"success": False, "message": evaluation["error"], "raw": evaluation.get("raw_response", "")}), 500
+
+#         return jsonify({
+#             "success": True,
+#             "interview": evaluation.get("questions", []),
+#             "score": evaluation.get("total_score"),
+#             "feedback": evaluation.get("overall_feedback")
+#         })
+#     except Exception:
+#         tb = traceback.format_exc()
+#         print("Error in /complete_interview:", tb)
+#         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
 @app.route('/complete_interview', methods=['POST'])
 def complete_interview():
     try:
@@ -238,7 +292,7 @@ def complete_interview():
             return jsonify({"success": False, "message": "Some answers are missing."}), 400
 
         evaluation = task_manager.run_task("evaluate_interview", {"email": email, "qa_history": completed_qa})
-        if "error" in evaluation:
+        if isinstance(evaluation, dict) and "error" in evaluation:
             return jsonify({"success": False, "message": evaluation["error"], "raw": evaluation.get("raw_response", "")}), 500
 
         return jsonify({
