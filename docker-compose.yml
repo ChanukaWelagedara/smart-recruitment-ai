@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    image: smart-recruitment-ai:latest
+    container_name: smart-ai
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./results:/app/results  # persist results folder
+    env_file:
+      - .env  # load your API keys
