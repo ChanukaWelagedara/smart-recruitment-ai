@@ -21,6 +21,7 @@ class LangChainInterviewAgent(BaseAgent):
     def perform_task(self, data: dict, context: dict = None):
         task_type = data.get("task_type")
         email = data.get("email")
+        job_description = data.get("job_description", "")
         if not email:
             return {"error": "Missing candidate email"}
 
@@ -29,7 +30,7 @@ class LangChainInterviewAgent(BaseAgent):
             return {"error": f"No CV summary found for email: {email}"}
 
         if task_type == "start_interview":
-            return self._start_interview(cv_summary)
+            return self._start_interview(cv_summary, job_description)
 
         elif task_type == "continue_interview":
             qa_history = data.get("qa_history", [])
@@ -57,17 +58,31 @@ class LangChainInterviewAgent(BaseAgent):
         except Exception as e:
             return f"Error invoking LLM: {str(e)}"
 
-    def _start_interview(self, cv_summary: str) -> str:
+    def _start_interview(self, cv_summary: str, job_description: str="") -> str:
         prompt = f"""
-You are an expert technical interviewer. Your job is to generate the first interview question based on the candidate's CV.
-
+You are an expert technical interviewer. 
+Your goal is to generate the first **technical question** for a candidate applying for this role.
+Carefully analyze the following information:
 CV Summary:
 \"\"\"
 {cv_summary}
 \"\"\"
 
-Start by asking a relevant web development interview question, based on the technologies mentioned (e.g., MERN stack, Node.js, MongoDB).
-Only return the question.
+Job Description:
+\"\"\"{job_description}\"\"\"
+**Instructions:**
+1. First, identify key **skills, technologies, and responsibilities** mentioned in the job post (e.g., MERN, APIs, React, AWS, CI/CD).
+2. Then, read the CV summary and find the **most relevant experience or skills** that match the job requirements.
+3. Based on this overlap, generate **one strong technical question** that:
+   - Tests the candidate’s real understanding or problem-solving skills.
+   - Is relevant to both the job and the candidate’s CV.
+   - Is phrased clearly and professionally.
+   - Focuses on reasoning, system design, or applied technical skill (not trivia).
+
+**Example Output:**
+- "Can you explain how you optimized a MongoDB query for scalability in one of your past MERN projects?"
+- "In your experience deploying React and Node.js applications, what challenges did you face with AWS or CI/CD pipelines?"
+Only return the question text — no explanation or commentary.
 """
         return self._invoke_llm(prompt)
 
@@ -161,11 +176,28 @@ Return ONLY a valid JSON object exactly like this, with NO extra explanation or 
 "overall_feedback": "..."
 }}
 """
+        # try:
+        #     response_str = self._invoke_llm(prompt)
+        #     # Debug print for raw output
+        #     print("LLM raw evaluation response:", repr(response_str))
+        #     evaluation_json = json.loads(response_str)
+        #     return evaluation_json
+        # except Exception as e:
+        #     return {
+        #         "error": f"Error evaluating interview: {str(e)}",
+        #         "raw_response": response_str if 'response_str' in locals() else None
+        #     }
+        
         try:
             response_str = self._invoke_llm(prompt)
-            # Debug print for raw output
             print("LLM raw evaluation response:", repr(response_str))
-            evaluation_json = json.loads(response_str)
+            cleaned = (
+                response_str.replace("```json", "")
+                .replace("```", "")
+                .strip()
+            )
+
+            evaluation_json = json.loads(cleaned)
             return evaluation_json
         except Exception as e:
             return {
