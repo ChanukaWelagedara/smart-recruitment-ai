@@ -57,7 +57,7 @@ class GeneralInterviewAgent(BaseAgent):
                 next_q = session["questions"][session["current_index"]]
                 return {"success": True, "next_question": next_q}
 
-            # ✅ If all questions answered, end interview automatically
+            # If all questions answered, end interview automatically
             session["completed"] = True
             self.sessions.pop(email, None)  # remove session after completion
             return {
