@@ -12,7 +12,7 @@ from agents.file_download_agent import FileDownloadAgent
 from agents.data_privacy_agent import DataPrivacyAgent
 from agents.job_post_generation_agent import JobPostGenerationAgent
 from agents.general_interview_agent import GeneralInterviewAgent
-import traceback
+
 # Setup agents
 existing_agents = [
     LangChainCVSummaryAgent(),
