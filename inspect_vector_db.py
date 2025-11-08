@@ -2,7 +2,7 @@
 
 from database.langchain_vector_db import LangChainVectorDB  # Make sure this path matches your file name
 
-def list_vector_db_documents(limit: int = 10):
+def list_vector_db_documents(limit: int = None):
     db = LangChainVectorDB()
     docs = db.get_all_documents()
 
