@@ -325,27 +325,59 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, answer })
         });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
         const data = await res.json();
         
-        if (data.success) {
-          if (data.done) {
-            // Interview is complete
-            interviewActive = false;
-            document.getElementById("answer-section").classList.add("hidden");
-            
-            // Show completion message in chat
-            showCompletionMessage();
-            
-            displayResults(data);
-          } else if (data.next_question) {
-            // Show next question
-            showQuestion(data.next_question);
-          }
+        console.log('Backend response:', data); // Debug log
+        console.log('Response type:', typeof data);
+        console.log('Response keys:', Object.keys(data));
+        
+        // Check if interview is finished (multiple possible formats)
+        if (data.finished === true || data.finished === "true" || data.finished === 1) {
+          // Interview is complete after 5 questions
+          interviewActive = false;
+          document.getElementById("answer-section").classList.add("hidden");
+          
+          // Show completion message in chat
+          showCompletionMessage();
+          
+          // Display results with the message from backend
+          displayResults({
+            success: true,
+            summary: data.message || 'Your general interview is complete. Thank you for your responses!',
+            conversation: data.conversation,
+            score: data.score,
+            feedback: data.feedback
+          });
+        } else if (data.success === true && (data.question && data.question.trim() !== '')) {
+          // Backend returned success with question
+          showQuestion(data.question);
+        } else if (data.question && data.question.trim() !== '') {
+          // Automatically show next question (2nd, 3rd, 4th, 5th)
+          showQuestion(data.question);
+        } else if (data.next_question && data.next_question.trim() !== '') {
+          // Alternative field name for next question
+          showQuestion(data.next_question);
+        } else if (data.success === false || data.error) {
+          alert('Error: ' + (data.message || data.error || 'Unknown error'));
         } else {
-          alert('Error: ' + (data.message || 'Unknown error'));
+          // Fallback: if no question and not finished
+          console.error('Unexpected response format:', data);
+          console.error('Full response object:', JSON.stringify(data, null, 2));
+          
+          // Show detailed error message
+          let errorMsg = 'Unexpected response from server.\n\n';
+          errorMsg += 'Response keys: ' + Object.keys(data).join(', ') + '\n\n';
+          errorMsg += 'Full response: ' + JSON.stringify(data, null, 2);
+          alert(errorMsg);
         }
       } catch (error) {
-        alert('Error sending answer: ' + error.message);
+        console.error('Error details:', error);
+        alert('Error sending answer: ' + error.message + '\n\nPlease check browser console (F12) for more details.');
       } finally {
         sendButton.innerHTML = originalText;
         sendButton.disabled = false;
