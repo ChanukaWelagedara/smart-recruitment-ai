@@ -1,4 +1,5 @@
 import json
+import uuid
 from database.langchain_vector_db import LangChainVectorDB
 from config.langchain_config import LangChainConfig
 from agents.base_agent import BaseAgent
@@ -8,6 +9,7 @@ class LangChainInterviewAgent(BaseAgent):
         super().__init__("interview_agent")
         self.db = LangChainVectorDB()
         self.llm = LangChainConfig.get_llm()
+        self.sessions = {}
 
     def can_handle(self, task_type: str) -> bool:
         # Define task types this agent handles
@@ -22,27 +24,56 @@ class LangChainInterviewAgent(BaseAgent):
         task_type = data.get("task_type")
         email = data.get("email")
         job_description = data.get("job_description", "")
+        qa_history = data.get("qa_history", [])
         if not email:
             return {"error": "Missing candidate email"}
 
         cv_summary = self.db.get_cv_summary_by_email(email)
         if not cv_summary:
             return {"error": f"No CV summary found for email: {email}"}
+        
+        if email not in self.sessions:
+            self.sessions[email] = {
+               
+                "cv_summary": cv_summary,
+                "job_description": job_description,
+                "qa_history": []
+            }
+        session = self.sessions[email]
 
         if task_type == "start_interview":
-            return self._start_interview(cv_summary, job_description)
+            first_question = self._start_interview(cv_summary, job_description)
+            session["qa_history"].append({"question": first_question, "answer": ""})
+            return {"question": first_question}
 
         elif task_type == "continue_interview":
-            qa_history = data.get("qa_history", [])
-            return self._continue_interview(cv_summary, qa_history)
+            # Save previous answer
+            if qa_history:
+                session["qa_history"].append(qa_history[-1])
+
+            # If 5 questions completed, automatically conduct full interview & evaluate
+            if len(session["qa_history"]) >= 6:
+                full_qa = self._conduct_full_interview(session["cv_summary"], session["qa_history"])
+                evaluation = self._evaluate_interview(session["cv_summary"], full_qa)
+                self.sessions.pop(email, None)  # remove session
+                return {
+                    "finished": True,
+                    "interview": evaluation.get("questions", []),
+                    "score": evaluation.get("total_score"),
+                    "feedback": evaluation.get("overall_feedback")
+                }
+
+            # Otherwise, continue with next question
+            next_question = self._continue_interview(session["cv_summary"], session["qa_history"])
+            return {"next_question": next_question}
 
         elif task_type == "conduct_full_interview":
-            qa_history = data.get("qa_history", [])
-            return self._conduct_full_interview(cv_summary, qa_history)
+            full_qa = self._conduct_full_interview(cv_summary, qa_history)
+            return full_qa
 
         elif task_type == "evaluate_interview":
-            qa_history = data.get("qa_history", [])
-            return self._evaluate_interview(cv_summary, qa_history)
+            evaluation = self._evaluate_interview(cv_summary, qa_history)
+            return evaluation
 
         else:
             return {"error": f"Unknown task type: {task_type}"}
@@ -112,7 +143,7 @@ Only return the question text.
     def _conduct_full_interview(self, cv_summary: str, qa_history: list) -> list:
         full_qa = qa_history.copy()
 
-        for _ in range(5 - len(full_qa)):
+        for _ in range(6 - len(full_qa)):
             history_str = ""
             for i, pair in enumerate(full_qa, 1):
                 q = pair.get("question", "").strip()
