@@ -63,7 +63,7 @@ class GeneralInterviewAgent(BaseAgent):
 
             # All questions answered
             session["completed"] = True
-            self.sessions.pop(email, None)
+           # self.sessions.pop(email, None)
             return {
                 "success": True,
                 "finished": True,
