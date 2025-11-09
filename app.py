@@ -369,6 +369,104 @@ def start_general_interview():
         tb = traceback.format_exc()
         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
 
+# @app.route('/answer_general', methods=['POST'])
+# def answer_general():
+#     try:
+#         content = request.json or {}
+#         email = content.get("email")
+#         answer = content.get("answer")
+
+#         if not email or answer is None:
+#             return jsonify({"success": False, "message": "Missing email or answer"}), 400
+
+#         result = task_manager.run_task("answer_general", {
+#             "task_type": "answer_general",
+#             "email": email,
+#             "answer": answer
+#         })
+
+#         if isinstance(result, dict) and result.get("finished"):
+#             task_manager.run_task("terminate_general", {
+#                 "task_type": "terminate_general",
+#                 "email": email
+#             })
+#             return jsonify({
+#                 "success": True,
+#                 "finished": True,
+#                 "message": result.get("message")
+#             })
+
+#         if isinstance(result, dict):
+#             question_text = result.get("question") or result.get("next_question")
+#             if question_text:
+#                 return jsonify({"success": True, "question": question_text})
+#             else:
+#                 return jsonify({"success": False, "message": "Agent did not return a question"}), 500
+
+#         return jsonify({"success": False, "message": "Unexpected response from agent"}), 500
+
+#     except Exception:
+#         tb = traceback.format_exc()
+#         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
+
+# @app.route('/answer_general', methods=['POST'])
+# def answer_general():
+#     try:
+#         content = request.json or {}
+#         email = content.get("email")
+#         answer = content.get("answer")
+
+#         if not email or answer is None:
+#             return jsonify({"success": False, "message": "Missing email or answer"}), 400
+
+#         # Call the agent via TaskManager
+#         result = task_manager.run_task("answer_general", {
+#             "task_type": "answer_general",
+#             "email": email,
+#             "answer": answer
+#         })
+
+#         # ------------------ CHECK IF INTERVIEW IS FINISHED ------------------
+#         if isinstance(result, dict) and result.get("finished"):
+#             # Optional: terminate session
+#             task_manager.run_task("terminate_general", {
+#                 "task_type": "terminate_general",
+#                 "email": email
+#             })
+#             return jsonify({
+#                 "success": True,
+#                 "finished": True,
+#                 "message": result.get("message", "General interview completed.")
+#             })
+
+#         # ------------------ ONGOING INTERVIEW ------------------
+#         if isinstance(result, dict):
+#             question_text = result.get("question") or result.get("next_question")
+#             if question_text:
+#                 return jsonify({"success": True, "question": question_text})
+            
+#             # No question returned
+#             return jsonify({
+#                 "success": False,
+#                 "message": "Agent did not return a question",
+#                 "debug_result": str(result)
+#             }), 500
+
+#         # ------------------ UNEXPECTED RESPONSE ------------------
+#         return jsonify({
+#             "success": False,
+#             "message": "Unexpected response from interview agent",
+#             "debug_type": str(type(result))
+#         }), 500
+
+#     except Exception:
+#         tb = traceback.format_exc()
+#         return jsonify({
+#             "success": False,
+#             "message": "Internal server error",
+#             "error": tb
+#         }), 500
+
 @app.route('/answer_general', methods=['POST'])
 def answer_general():
     try:
@@ -379,35 +477,55 @@ def answer_general():
         if not email or answer is None:
             return jsonify({"success": False, "message": "Missing email or answer"}), 400
 
+        # Call the agent via TaskManager
         result = task_manager.run_task("answer_general", {
             "task_type": "answer_general",
             "email": email,
             "answer": answer
         })
 
-        if isinstance(result, dict) and result.get("finished"):
-            task_manager.run_task("terminate_general", {
-                "task_type": "terminate_general",
-                "email": email
-            })
-            return jsonify({
-                "success": True,
-                "finished": True,
-                "message": result.get("message")
-            })
-
+        # ------------------ ONGOING INTERVIEW ------------------
         if isinstance(result, dict):
+            # If interview is finished, return final message
+            if result.get("finished"):
+                # Optional: terminate session
+                task_manager.run_task("terminate_general", {
+                    "task_type": "terminate_general",
+                    "email": email
+                })
+                return jsonify({
+                    "success": True,
+                    "finished": True,
+                    "message": result.get("message", "Now, let's move on to some technical questions.")
+                })
+
+            # If still ongoing, return next question
             question_text = result.get("question") or result.get("next_question")
             if question_text:
                 return jsonify({"success": True, "question": question_text})
-            else:
-                return jsonify({"success": False, "message": "Agent did not return a question"}), 500
 
-        return jsonify({"success": False, "message": "Unexpected response from agent"}), 500
+            # Graceful fallback if no question returned
+            return jsonify({
+                "success": False,
+                "message": "Agent did not return a question",
+                "debug_result": str(result)
+            }), 500
+
+        # ------------------ UNEXPECTED RESPONSE ------------------
+        return jsonify({
+            "success": False,
+            "message": "Unexpected response from interview agent",
+            "debug_type": str(type(result))
+        }), 500
 
     except Exception:
         tb = traceback.format_exc()
-        return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
+        return jsonify({
+            "success": False,
+            "message": "Internal server error",
+            "error": tb
+        }), 500
+
 
 @app.route('/terminate_general', methods=['POST'])
 def terminate_general():
