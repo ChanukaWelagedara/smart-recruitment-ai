@@ -51,7 +51,6 @@ class LangChainInterviewAgent(BaseAgent):
             if qa_history:
                 session["qa_history"].append(qa_history[-1])
 
-            # If 5 questions completed, automatically conduct full interview & evaluate
             if len(session["qa_history"]) >= 6:
                 full_qa = self._conduct_full_interview(session["cv_summary"], session["qa_history"])
                 evaluation = self._evaluate_interview(session["cv_summary"], full_qa)
