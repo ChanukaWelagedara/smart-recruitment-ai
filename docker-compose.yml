@@ -9,6 +9,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./results:/app/results  # persist results folder
+      - ./results:/app/results 
+      - ./cv_chroma_db:/app/cv_chroma_db # persist results folder
     env_file:
       - .env  # load your API keys
