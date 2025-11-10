@@ -310,7 +310,8 @@ def next_question():
                 "success": True,
                 "finished": True,
                 "message": result.get("message"),
-                "qa_history": qa_history
+                "qa_history": qa_history,
+                "feedback": result.get("feedback")
             })
 
         # Otherwise, return next question
