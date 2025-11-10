@@ -93,17 +93,32 @@ class LangChainInterviewAgent(BaseAgent):
                 session["qa_history"] = qa_history
 
             # If 5 questions answered, finish with a thank you message
+            # if len(session["qa_history"]) >= 5:
+            #     evaluation = self._evaluate_interview(session["cv_summary"], session["qa_history"])
+            #     self.sessions.pop(email, None)  # remove session
+            #     return {
+            #         "success": True,
+            #         "finished": True,
+            #         "message": "Thank you for completing the technical interview!",
+            #         "qa_history": session["qa_history"],
+            #         "score": evaluation.get("total_score"),
+            #         "feedback": evaluation.get("overall_feedback"),
+            #         "questions": evaluation.get("questions", [])
+            #     }
             if len(session["qa_history"]) >= 5:
                 evaluation = self._evaluate_interview(session["cv_summary"], session["qa_history"])
-                self.sessions.pop(email, None)  # remove session
+                self.sessions.pop(email, None)
+
                 return {
                     "success": True,
                     "finished": True,
                     "message": "Thank you for completing the technical interview!",
                     "qa_history": session["qa_history"],
-                    "score": evaluation.get("total_score"),
-                    "feedback": evaluation.get("overall_feedback"),
-                    "questions": evaluation.get("questions", [])
+                    "evaluation": {
+                        "total_score": evaluation.get("total_score"),
+                        "overall_feedback": evaluation.get("overall_feedback"),
+                        "question_wise": evaluation.get("questions", [])
+                    }
                 }
 
             # Otherwise, continue with next question
