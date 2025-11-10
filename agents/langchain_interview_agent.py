@@ -46,25 +46,46 @@ class LangChainInterviewAgent(BaseAgent):
             session["qa_history"].append({"question": first_question, "answer": ""})
             return {"question": first_question}
 
-        elif task_type == "continue_interview":
-            # Save previous answer
-            if qa_history:
-                session["qa_history"].append(qa_history[-1])
+        # elif task_type == "continue_interview":
+        #     # Save previous answer
+        #     if qa_history:
+        #         session["qa_history"].append(qa_history[-1])
 
-            if len(session["qa_history"]) >= 6:
-                full_qa = self._conduct_full_interview(session["cv_summary"], session["qa_history"])
-                evaluation = self._evaluate_interview(session["cv_summary"], full_qa)
-                self.sessions.pop(email, None)  # remove session
+        #     if len(session["qa_history"]) >= 6:
+        #         full_qa = self._conduct_full_interview(session["cv_summary"], session["qa_history"])
+        #         evaluation = self._evaluate_interview(session["cv_summary"], full_qa)
+        #         self.sessions.pop(email, None)  # remove session
+        #         return {
+        #             "finished": True,
+        #             "interview": evaluation.get("questions", []),
+        #             "score": evaluation.get("total_score"),
+        #             "feedback": evaluation.get("overall_feedback")
+        #         }
+
+        #     # Otherwise, continue with next question
+        #     next_question = self._continue_interview(session["cv_summary"], session["qa_history"])
+        #     return {"next_question": next_question}
+        elif task_type == "continue_interview":
+    # Save previous answer if present
+            if qa_history:
+                session["qa_history"] = qa_history
+
+            # If 5 questions answered, finish with a thank you message
+            if len(session["qa_history"]) >= 5:
                 return {
+                    "success": True,
                     "finished": True,
-                    "interview": evaluation.get("questions", []),
-                    "score": evaluation.get("total_score"),
-                    "feedback": evaluation.get("overall_feedback")
+                    "message": "Thank you for completing the technical interview!"
                 }
 
             # Otherwise, continue with next question
             next_question = self._continue_interview(session["cv_summary"], session["qa_history"])
-            return {"next_question": next_question}
+            return {
+                "success": True,
+                "next_question": next_question,
+                "qa_history": session["qa_history"]
+            }
+
 
         elif task_type == "conduct_full_interview":
             full_qa = self._conduct_full_interview(cv_summary, qa_history)
