@@ -75,7 +75,9 @@ class LangChainInterviewAgent(BaseAgent):
                 return {
                     "success": True,
                     "finished": True,
-                    "message": "Thank you for completing the technical interview!"
+                    "message": "Thank you for completing the technical interview!",
+                    "score": evaluation.get("total_score"),
+                    "feedback": evaluation.get("overall_feedback")
                 }
 
             # Otherwise, continue with next question
