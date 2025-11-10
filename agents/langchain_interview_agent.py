@@ -65,17 +65,42 @@ class LangChainInterviewAgent(BaseAgent):
         #     # Otherwise, continue with next question
         #     next_question = self._continue_interview(session["cv_summary"], session["qa_history"])
         #     return {"next_question": next_question}
+    #     elif task_type == "continue_interview":
+    # # Save previous answer if present
+    #         if qa_history:
+    #             session["qa_history"] = qa_history
+
+    #         # If 5 questions answered, finish with a thank you message
+    #         if len(session["qa_history"]) >= 5:
+    #             return {
+    #                 "success": True,
+    #                 "finished": True,
+    #                 "message": "Thank you for completing the technical interview!",
+    #                 "score": evaluation.get("total_score"),
+    #                 "feedback": evaluation.get("overall_feedback")
+    #             }
+
+    #         # Otherwise, continue with next question
+    #         next_question = self._continue_interview(session["cv_summary"], session["qa_history"])
+    #         return {
+    #             "success": True,
+    #             "next_question": next_question,
+    #             "qa_history": session["qa_history"]
+    #         }
         elif task_type == "continue_interview":
-    # Save previous answer if present
+            # Save previous answer if present
             if qa_history:
                 session["qa_history"] = qa_history
 
             # If 5 questions answered, finish with a thank you message
             if len(session["qa_history"]) >= 5:
+                evaluation = self._evaluate_interview(session["cv_summary"], session["qa_history"])
+                self.sessions.pop(email, None)  # remove session
                 return {
                     "success": True,
                     "finished": True,
                     "message": "Thank you for completing the technical interview!",
+                    "qa_history": session["qa_history"],
                     "score": evaluation.get("total_score"),
                     "feedback": evaluation.get("overall_feedback")
                 }
@@ -87,6 +112,7 @@ class LangChainInterviewAgent(BaseAgent):
                 "next_question": next_question,
                 "qa_history": session["qa_history"]
             }
+
 
 
         elif task_type == "conduct_full_interview":
