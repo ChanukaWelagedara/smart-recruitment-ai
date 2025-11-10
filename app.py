@@ -343,10 +343,6 @@ def complete_interview():
 
 
 # ---------------------------- GENERAL INTERVIEW ROUTES ---------------------------- #
-from flask import Flask, request, jsonify
-import traceback
-
-app = Flask(__name__)
 
 @app.route('/start_general_interview', methods=['POST'])
 def start_general_interview():
@@ -364,6 +360,7 @@ def start_general_interview():
         return jsonify({
             "success": True,
             "question": result.get("question"),
+            "all_questions": result.get("all_questions"),
             "message": result.get("message", "Interview started.")
         })
     except Exception:
@@ -379,17 +376,18 @@ def answer_general():
         answer = content.get("answer")
         question = content.get("question")
         qa_history = content.get("qa_history", [])
+        all_questions = content.get("all_questions")
 
-        if not email or answer is None or not question:
-            return jsonify({"success": False, "message": "Missing email, question, or answer"}), 400
+        if not email or answer is None or not question or not all_questions:
+            return jsonify({"success": False, "message": "Missing email, question, answer, or all_questions"}), 400
 
-        # Append latest Q&A to history
+        # Append current Q&A
         qa_history.append({"question": question, "answer": answer})
 
         result = task_manager.run_task("answer_general", {
             "task_type": "answer_general",
-            "email": email,
-            "qa_history": qa_history
+            "qa_history": qa_history,
+            "all_questions": all_questions
         })
 
         if result.get("finished"):
@@ -403,13 +401,136 @@ def answer_general():
         return jsonify({
             "success": True,
             "question": result.get("question"),
-            "index": result.get("index", len(qa_history) + 1),
-            "qa_history": qa_history
+            "index": len(qa_history) + 1,
+            "qa_history": qa_history,
+            "all_questions": all_questions
         })
 
     except Exception:
         tb = traceback.format_exc()
-        return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
+        return jsonify({
+            "success": False,
+            "message": "Internal server error",
+            "error": tb
+        }), 500
+
+# @app.route('/start_general_interview', methods=['POST'])
+# def start_general_interview():
+#     try:
+#         content = request.json or {}
+#         email = content.get("email")
+#         if not email:
+#             return jsonify({"success": False, "message": "Missing email"}), 400
+
+#         result = task_manager.run_task("start_general_interview", {
+#             "task_type": "start_general_interview",
+#             "email": email
+#         })
+
+#         return jsonify({
+#             "success": True,
+#             "question": result.get("question"),
+#             "message": result.get("message", "Interview started.")
+#         })
+#     except Exception:
+#         tb = traceback.format_exc()
+#         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
+
+# @app.route('/answer_general', methods=['POST'])
+# def answer_general():
+#     try:
+#         content = request.json or {}
+#         email = content.get("email")
+#         answer = content.get("answer")
+#         question = content.get("question")
+#         qa_history = content.get("qa_history", [])
+
+#         if not email or answer is None or not question:
+#             return jsonify({"success": False, "message": "Missing email, question, or answer"}), 400
+
+#         # Append latest Q&A to history
+#         qa_history.append({"question": question, "answer": answer})
+
+#         result = task_manager.run_task("answer_general", {
+#             "task_type": "answer_general",
+#             "email": email,
+#             "qa_history": qa_history
+#         })
+
+#         # ---------------- FINISHED INTERVIEW ----------------
+#         if result.get("finished"):
+#             return jsonify({
+#                 "success": True,
+#                 "finished": True,
+#                 "message": result.get("message", "Now, let's move on to some technical questions."),
+#                 "qa_history": qa_history
+#             })
+
+#         # ---------------- NEXT QUESTION ----------------
+#         next_question = result.get("question")
+#         if next_question:
+#             return jsonify({
+#                 "success": True,
+#                 "question": next_question,
+#                 "index": result.get("index", len(qa_history) + 1),
+#                 "qa_history": qa_history
+#             })
+
+#         # ---------------- FALLBACK ----------------
+#         return jsonify({
+#             "success": False,
+#             "message": "Agent did not return a question",
+#             "debug_result": str(result)
+#         }), 500
+
+#     except Exception:
+#         tb = traceback.format_exc()
+#         return jsonify({
+#             "success": False,
+#             "message": "Internal server error",
+#             "error": tb
+#         }), 500
+
+
+# @app.route('/answer_general', methods=['POST'])
+# def answer_general():
+#     try:
+#         content = request.json or {}
+#         email = content.get("email")
+#         answer = content.get("answer")
+#         question = content.get("question")
+#         qa_history = content.get("qa_history", [])
+
+#         if not email or answer is None or not question:
+#             return jsonify({"success": False, "message": "Missing email, question, or answer"}), 400
+
+#         # Append latest Q&A to history
+#         qa_history.append({"question": question, "answer": answer})
+
+#         result = task_manager.run_task("answer_general", {
+#             "task_type": "answer_general",
+#             "email": email,
+#             "qa_history": qa_history
+#         })
+
+#         if result.get("finished"):
+#             return jsonify({
+#                 "success": True,
+#                 "finished": True,
+#                 "message": result.get("message"),
+#                 "qa_history": qa_history
+#             })
+
+#         return jsonify({
+#             "success": True,
+#             "question": result.get("question"),
+#             "index": result.get("index", len(qa_history) + 1),
+#             "qa_history": qa_history
+#         })
+
+#     except Exception:
+#         tb = traceback.format_exc()
+#         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
 
 
 @app.route('/terminate_general', methods=['POST'])
