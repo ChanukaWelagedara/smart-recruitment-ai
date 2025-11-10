@@ -46,65 +46,11 @@ class LangChainInterviewAgent(BaseAgent):
             session["qa_history"].append({"question": first_question, "answer": ""})
             return {"question": first_question}
 
-        # elif task_type == "continue_interview":
-        #     # Save previous answer
-        #     if qa_history:
-        #         session["qa_history"].append(qa_history[-1])
-
-        #     if len(session["qa_history"]) >= 6:
-        #         full_qa = self._conduct_full_interview(session["cv_summary"], session["qa_history"])
-        #         evaluation = self._evaluate_interview(session["cv_summary"], full_qa)
-        #         self.sessions.pop(email, None)  # remove session
-        #         return {
-        #             "finished": True,
-        #             "interview": evaluation.get("questions", []),
-        #             "score": evaluation.get("total_score"),
-        #             "feedback": evaluation.get("overall_feedback")
-        #         }
-
-        #     # Otherwise, continue with next question
-        #     next_question = self._continue_interview(session["cv_summary"], session["qa_history"])
-        #     return {"next_question": next_question}
-    #     elif task_type == "continue_interview":
-    # # Save previous answer if present
-    #         if qa_history:
-    #             session["qa_history"] = qa_history
-
-    #         # If 5 questions answered, finish with a thank you message
-    #         if len(session["qa_history"]) >= 5:
-    #             return {
-    #                 "success": True,
-    #                 "finished": True,
-    #                 "message": "Thank you for completing the technical interview!",
-    #                 "score": evaluation.get("total_score"),
-    #                 "feedback": evaluation.get("overall_feedback")
-    #             }
-
-    #         # Otherwise, continue with next question
-    #         next_question = self._continue_interview(session["cv_summary"], session["qa_history"])
-    #         return {
-    #             "success": True,
-    #             "next_question": next_question,
-    #             "qa_history": session["qa_history"]
-    #         }
         elif task_type == "continue_interview":
             # Save previous answer if present
             if qa_history:
                 session["qa_history"] = qa_history
 
-            # If 5 questions answered, finish with a thank you message
-            # if len(session["qa_history"]) >= 5:
-            #     evaluation = self._evaluate_interview(session["cv_summary"], session["qa_history"])
-            #     self.sessions.pop(email, None)  # remove session
-            #     return {
-            #         "success": True,
-            #         "finished": True,
-            #         "message": "Thank you for completing the technical interview!",
-            #         "qa_history": session["qa_history"],
-            #         "score": evaluation.get("total_score"),
-            #         "feedback": evaluation.get("overall_feedback"),
-            #         "questions": evaluation.get("questions", [])
-            #     }
             if len(session["qa_history"]) >= 5:
                 evaluation = self._evaluate_interview(session["cv_summary"], session["qa_history"])
                 self.sessions.pop(email, None)
@@ -275,18 +221,6 @@ Return ONLY a valid JSON object exactly like this, with NO extra explanation or 
 "overall_feedback": "..."
 }}
 """
-        # try:
-        #     response_str = self._invoke_llm(prompt)
-        #     # Debug print for raw output
-        #     print("LLM raw evaluation response:", repr(response_str))
-        #     evaluation_json = json.loads(response_str)
-        #     return evaluation_json
-        # except Exception as e:
-        #     return {
-        #         "error": f"Error evaluating interview: {str(e)}",
-        #         "raw_response": response_str if 'response_str' in locals() else None
-        #     }
-        
         try:
             response_str = self._invoke_llm(prompt)
             print("LLM raw evaluation response:", repr(response_str))
@@ -298,12 +232,6 @@ Return ONLY a valid JSON object exactly like this, with NO extra explanation or 
             )
 
             evaluation_json = json.loads(cleaned)
-            # if "total_score" not in evaluation_json:
-            #     evaluation_json["total_score"] = sum(
-            #         q.get("score", 0) for q in evaluation_json.get("questions", [])
-            #     )
-            # if "overall_feedback" not in evaluation_json:
-            #      evaluation_json["overall_feedback"] = "Candidate performed well overall."
             evaluation_json["questions"] = evaluation_json.get("questions", [])
             for q in evaluation_json["questions"]:
                 q.setdefault("masked", False)
@@ -311,11 +239,12 @@ Return ONLY a valid JSON object exactly like this, with NO extra explanation or 
                 q.setdefault("feedback", "")
             evaluation_json.setdefault("total_score", sum(q.get("score", 0) for q in evaluation_json["questions"]))
             evaluation_json.setdefault("overall_feedback", "Candidate performed well overall.")
-
+            evaluation_json["question_wise"] = evaluation_json["questions"]
             return evaluation_json
         except Exception as e:
             return {
                 "error": f"Error evaluating interview: {str(e)}",
                 "raw_response": response_str if 'response_str' in locals() else None,
-                "questions": []
+                "questions": [],
+                "question_wise": []
             }
