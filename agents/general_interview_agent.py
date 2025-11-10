@@ -5,15 +5,7 @@ class GeneralInterviewAgent(BaseAgent):
     def __init__(self):
         super().__init__("GeneralInterviewAgent")
         self.llm = LangChainConfig.get_llm()
-        self.default_question_count = 5  # Number of questions per interview
-        # Fallback questions if LLM fails
-        self.default_questions = [
-            "Tell me about yourself.",
-            "What motivates you?",
-            "Describe a challenge you overcame.",
-            "Where do you see yourself in 5 years?",
-            "Why do you want this role?"
-        ]
+        self.max_questions = 5
 
     def can_handle(self, task_type: str) -> bool:
         return task_type in ["start_general_interview", "answer_general"]
@@ -24,37 +16,43 @@ class GeneralInterviewAgent(BaseAgent):
 
         # ---------------- START INTERVIEW ----------------
         if task_type == "start_general_interview":
-            prompt = (
-                f"Generate {self.default_question_count} short, non-technical interview questions. "
-                "Return each question on a new line starting with '-'"
-            )
-            ai_message = self.llm.invoke(prompt)
-            questions = [q.strip("- ").strip() for q in ai_message.content.split("\n") if q.strip()]
+            prompt = f"Generate a short, non-technical interview question for a candidate. Keep it concise."
+            try:
+                ai_message = self.llm.invoke(prompt)
+                first_question = ai_message.content.strip()
+                if not first_question:
+                    first_question = "Tell me about yourself."
+            except Exception:
+                first_question = "Tell me about yourself."
 
-            if not questions or len(questions) < self.default_question_count:
-                questions = self.default_questions
+            return {"success": True, "question": first_question}
 
-            return {
-                "success": True,
-                "question": questions[0],
-                "all_questions": questions
-            }
-
-        # ---------------- ANSWER HANDLING ----------------
+        # ---------------- ANSWER GENERAL ----------------
         elif task_type == "answer_general":
-            questions = data.get("all_questions", self.default_questions)
-            current_index = len(qa_history)
-
-            if current_index < len(questions):
-                # Return next question
-                return {"success": True, "question": questions[current_index]}
-            else:
-                # All questions answered
+            # If 5 questions already answered
+            if len(qa_history) >= self.max_questions:
                 return {
                     "success": True,
                     "finished": True,
-                    "message": "Now, let's move on to some technical questions."
+                    "message": "General interview finished. Let's move on to technical questions."
                 }
+
+            # Generate next question dynamically
+            history_text = "\n".join([f"Q: {qa['question']}\nA: {qa['answer']}" for qa in qa_history])
+            prompt = (
+                f"Given the previous interview questions and answers:\n{history_text}\n"
+                "Generate a new, short, non-technical interview question that is relevant and not repetitive."
+            )
+
+            try:
+                ai_message = self.llm.invoke(prompt)
+                next_question = ai_message.content.strip()
+                if not next_question:
+                    next_question = "Tell me something interesting about yourself."
+            except Exception:
+                next_question = "Tell me something interesting about yourself."
+
+            return {"success": True, "question": next_question}
 
         return {"success": False, "message": "Unsupported task type"}
 
