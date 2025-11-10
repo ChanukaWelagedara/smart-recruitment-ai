@@ -293,13 +293,17 @@ Return ONLY a valid JSON object exactly like this, with NO extra explanation or 
             cleaned = (
                 response_str.replace("```json", "")
                 .replace("```", "")
+                .replace("\n", "")
                 .strip()
             )
 
             evaluation_json = json.loads(cleaned)
-            for q in evaluation_json.get("questions", []):
-                if "masked" not in q:
-                    q["masked"] = False
+            if "total_score" not in evaluation_json:
+                evaluation_json["total_score"] = sum(
+                    q.get("score", 0) for q in evaluation_json.get("questions", [])
+                )
+            if "overall_feedback" not in evaluation_json:
+                 evaluation_json["overall_feedback"] = "Candidate performed well overall."
 
             return evaluation_json
         except Exception as e:

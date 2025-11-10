@@ -253,38 +253,6 @@ def start_interview():
         print("Error in /start_interview:", tb)
         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
 
-# @app.route('/next_question', methods=['POST'])
-# def next_question():
-#     try:
-#         content = request.json or {}
-#         email, qa_history = content.get("email"), content.get("qa_history", [])
-#         if not email or qa_history is None:
-#             return jsonify({"success": False, "message": "Missing email or qa_history"}), 400
-
-#         # Use run_task here
-#         result = task_manager.run_task("continue_interview", {
-#             "task_type": "continue_interview",
-#             "email": email,
-#             "qa_history": qa_history
-#         })
-
-#         if "error" in result:
-#             return jsonify({"success": False, "message": result["error"]}), 500
-
-#         # If interview finished, return full evaluation
-#         if result.get("finished"):
-#             return jsonify({
-#                 "success": True,
-#                 "interview": result.get("interview"),
-#                 "score": result.get("score"),
-#                 "feedback": result.get("feedback")
-#             })
-
-#         return jsonify({"success": True, "next_question": result.get("next_question")})
-#     except Exception:
-#         tb = traceback.format_exc()
-#         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
-
 @app.route('/next_question', methods=['POST'])
 def next_question():
     try:
@@ -304,27 +272,52 @@ def next_question():
         if "error" in result:
             return jsonify({"success": False, "message": result["error"]}), 500
 
-        # If interview finished, return thank you message
+       
+        # if result.get("finished"):
+        #     evaluation = result.get("evaluation", {})
+        #     return jsonify({
+        #         "success": True,
+        #         "finished": True,
+        #         "message": result.get("message", "Interview completed."),
+        #         "qa_history": result.get("qa_history", []),
+        #         "evaluation": {
+        #             "total_score": evaluation.get("total_score"),
+        #             "overall_feedback": evaluation.get("overall_feedback"),
+        #             "question_wise": evaluation.get("question_wise", [])
+        #         }
+        #     })
         if result.get("finished"):
+            evaluation = result.get("evaluation", {})
             return jsonify({
                 "success": True,
                 "finished": True,
                 "message": result.get("message"),
-                "qa_history": qa_history,
-                "score": result.get("score"),
-                "feedback": result.get("feedback")
+                "qa_history": result.get("qa_history", []),
+                "evaluation": {
+                    "total_score": evaluation.get("total_score", 0),
+                    "overall_feedback": evaluation.get("overall_feedback", "No feedback generated."),
+                    "question_wise": evaluation.get("questions", [])
+                }
             })
 
-        # Otherwise, return next question
+
+      
         return jsonify({
             "success": True,
+            "finished": False,
             "next_question": result.get("next_question"),
-            "qa_history": qa_history
+            "qa_history": result.get("qa_history", [])
         })
 
     except Exception as e:
         tb = traceback.format_exc()
-        return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
+        return jsonify({
+            "success": False,
+            "message": "Internal server error",
+            "error": str(e),
+            "trace": tb
+        }), 500
+
 
 @app.route('/complete_interview', methods=['POST'])
 def complete_interview():
@@ -474,3 +467,96 @@ def general_interview_page():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
+
+
+
+# @app.route('/next_question', methods=['POST'])
+# def next_question():
+#     try:
+#         content = request.json or {}
+#         email, qa_history = content.get("email"), content.get("qa_history", [])
+#         if not email or qa_history is None:
+#             return jsonify({"success": False, "message": "Missing email or qa_history"}), 400
+
+#         # Use run_task here
+#         result = task_manager.run_task("continue_interview", {
+#             "task_type": "continue_interview",
+#             "email": email,
+#             "qa_history": qa_history
+#         })
+
+#         if "error" in result:
+#             return jsonify({"success": False, "message": result["error"]}), 500
+
+#         # If interview finished, return full evaluation
+#         if result.get("finished"):
+#             return jsonify({
+#                 "success": True,
+#                 "interview": result.get("interview"),
+#                 "score": result.get("score"),
+#                 "feedback": result.get("feedback")
+#             })
+
+#         return jsonify({"success": True, "next_question": result.get("next_question")})
+#     except Exception:
+#         tb = traceback.format_exc()
+#         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
+
+# @app.route('/next_question', methods=['POST'])
+# def next_question():
+#     try:
+#         content = request.json or {}
+#         email = content.get("email")
+#         qa_history = content.get("qa_history", [])
+
+#         if not email:
+#             return jsonify({"success": False, "message": "Missing email"}), 400
+
+#         result = task_manager.run_task("continue_interview", {
+#             "task_type": "continue_interview",
+#             "email": email,
+#             "qa_history": qa_history
+#         })
+
+#         if "error" in result:
+#             return jsonify({"success": False, "message": result["error"]}), 500
+
+#         # If interview finished, return thank you message
+#         # if result.get("finished"):
+#         #     return jsonify({
+#         #         "success": True,
+#         #         "finished": True,
+#         #         "message": result.get("message"),
+#         #         "qa_history": qa_history,
+#         #         "total_score": result.get("score"),# display the score
+#         #         "overall_feedback": result.get("feedback"),
+#         #         "questions":result.get("questions",[])
+                              
+#         #     })
+
+#         if result.get("finished"):
+#             evaluation = result.get("evaluation", {})
+#             return jsonify({
+#                 "success": True,
+#                 "finished": True,
+#                 "message": result.get("message"),
+#                 "qa_history": result.get("qa_history", []),
+#                 "evaluation": {
+#                     "total_score": result.get("score"),
+#                     "overall_feedback": result.get("feedback"),
+#                     "detailed_feedback": evaluation.get("questions", [])
+#                 }
+#             })
+
+
+
+#         # Otherwise, return next question
+#         return jsonify({
+#             "success": True,
+#             "next_question": result.get("next_question"),
+#             "qa_history": qa_history
+#         })
+
+#     except Exception as e:
+#         tb = traceback.format_exc()
+#         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
