@@ -344,6 +344,7 @@ def complete_interview():
 
 # ---------------------------- GENERAL INTERVIEW ROUTES ---------------------------- #
 
+# ---------------- START GENERAL INTERVIEW ----------------
 @app.route('/start_general_interview', methods=['POST'])
 def start_general_interview():
     try:
@@ -354,20 +355,23 @@ def start_general_interview():
 
         result = task_manager.run_task("start_general_interview", {
             "task_type": "start_general_interview",
-            "email": email
+            "email": email,
+            "qa_history": []
         })
 
         return jsonify({
             "success": True,
             "question": result.get("question"),
-            "all_questions": result.get("all_questions"),
-            "message": result.get("message", "Interview started.")
+            "qa_history": [],
+            "message": "General interview started."
         })
+
     except Exception:
         tb = traceback.format_exc()
         return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
 
 
+# ---------------- ANSWER GENERAL ----------------
 @app.route('/answer_general', methods=['POST'])
 def answer_general():
     try:
@@ -376,44 +380,38 @@ def answer_general():
         answer = content.get("answer")
         question = content.get("question")
         qa_history = content.get("qa_history", [])
-        all_questions = content.get("all_questions")
 
-        if not email or answer is None or not question or not all_questions:
-            return jsonify({"success": False, "message": "Missing email, question, answer, or all_questions"}), 400
+        if not email or answer is None or not question:
+            return jsonify({"success": False, "message": "Missing email, question, or answer"}), 400
 
         # Append current Q&A
         qa_history.append({"question": question, "answer": answer})
 
-        result = task_manager.run_task("answer_general", {
-            "task_type": "answer_general",
-            "qa_history": qa_history,
-            "all_questions": all_questions
-        })
-
-        if result.get("finished"):
+        # Stop after 5 questions
+        if len(qa_history) >= 5:
             return jsonify({
                 "success": True,
                 "finished": True,
-                "message": result.get("message"),
+                "message": "General interview finished. Let's move on to technical questions.",
                 "qa_history": qa_history
             })
+
+        # Get next question from agent (LLM)
+        result = task_manager.run_task("answer_general", {
+            "task_type": "answer_general",
+            "email": email,
+            "qa_history": qa_history
+        })
 
         return jsonify({
             "success": True,
             "question": result.get("question"),
-            "index": len(qa_history) + 1,
-            "qa_history": qa_history,
-            "all_questions": all_questions
+            "qa_history": qa_history
         })
 
     except Exception:
         tb = traceback.format_exc()
-        return jsonify({
-            "success": False,
-            "message": "Internal server error",
-            "error": tb
-        }), 500
-
+        return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
 # @app.route('/start_general_interview', methods=['POST'])
 # def start_general_interview():
 #     try:
