@@ -239,6 +239,7 @@ Evaluate each individual answer. For each of the 5 questions, assign:
 - "answer": the candidate's answer
 - "score": a number out of 20
 - "feedback": 1-2 sentences of feedback on that specific answer
+- "masked:false"
 
 Then, also include:
 - "total_score": a number out of 100 (sum of the individual scores)
@@ -248,7 +249,10 @@ Return ONLY a valid JSON object exactly like this, with NO extra explanation or 
 
 {{
 "questions": [
-    {{"question": "...", "answer": "...", "score": 18, "feedback": "..."}},
+    {{"question": "...", 
+    "answer": "...", 
+    "score": 18, 
+    "feedback": "..."}},
     ...
 ],
 "total_score": 84,
@@ -277,6 +281,10 @@ Return ONLY a valid JSON object exactly like this, with NO extra explanation or 
             )
 
             evaluation_json = json.loads(cleaned)
+            for q in evaluation_json.get("questions", []):
+                if "masked" not in q:
+                    q["masked"] = False
+
             return evaluation_json
         except Exception as e:
             return {
