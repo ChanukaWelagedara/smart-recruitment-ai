@@ -298,16 +298,24 @@ Return ONLY a valid JSON object exactly like this, with NO extra explanation or 
             )
 
             evaluation_json = json.loads(cleaned)
-            if "total_score" not in evaluation_json:
-                evaluation_json["total_score"] = sum(
-                    q.get("score", 0) for q in evaluation_json.get("questions", [])
-                )
-            if "overall_feedback" not in evaluation_json:
-                 evaluation_json["overall_feedback"] = "Candidate performed well overall."
+            # if "total_score" not in evaluation_json:
+            #     evaluation_json["total_score"] = sum(
+            #         q.get("score", 0) for q in evaluation_json.get("questions", [])
+            #     )
+            # if "overall_feedback" not in evaluation_json:
+            #      evaluation_json["overall_feedback"] = "Candidate performed well overall."
+            evaluation_json["questions"] = evaluation_json.get("questions", [])
+            for q in evaluation_json["questions"]:
+                q.setdefault("masked", False)
+                q.setdefault("score", 0)
+                q.setdefault("feedback", "")
+            evaluation_json.setdefault("total_score", sum(q.get("score", 0) for q in evaluation_json["questions"]))
+            evaluation_json.setdefault("overall_feedback", "Candidate performed well overall.")
 
             return evaluation_json
         except Exception as e:
             return {
                 "error": f"Error evaluating interview: {str(e)}",
-                "raw_response": response_str if 'response_str' in locals() else None
+                "raw_response": response_str if 'response_str' in locals() else None,
+                "questions": []
             }
