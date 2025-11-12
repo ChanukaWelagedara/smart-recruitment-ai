@@ -178,17 +178,26 @@ def start_interview():
         result = task_manager.run_task("start_interview", {
             "task_type": "start_interview",
             "email": email,
-            "job_description": job_description
+            "job_description": job_description,
+            "violations":[]
+
         })
 
         if isinstance(result, dict) and "error" in result:
             return jsonify({"success": False, "message": result["error"]}), 500
 
-        return jsonify({"success": True, "question": str(result.get("question"))})
+        return jsonify({
+            "success": True, 
+            "question": str(result.get("question")),
+            "violations":[]
+            })
     except Exception:
         tb = traceback.format_exc()
         print("Error in /start_interview:", tb)
-        return jsonify({"success": False, "message": "Internal server error", "error": tb}), 500
+        return jsonify({
+            "success": False, 
+            "message": "Internal server error", 
+            "error": tb}), 500
 
 @app.route('/next_question', methods=['POST'])
 def next_question():
@@ -196,6 +205,7 @@ def next_question():
         content = request.json or {}
         email = content.get("email")
         qa_history = content.get("qa_history", [])
+        violations = content.get("violations", [])
 
         if not email:
             return jsonify({"success": False, "message": "Missing email"}), 400
@@ -203,7 +213,8 @@ def next_question():
         result = task_manager.run_task("continue_interview", {
             "task_type": "continue_interview",
             "email": email,
-            "qa_history": qa_history
+            "qa_history": qa_history,
+            "violations": violations
         })
 
         if "error" in result:
@@ -215,6 +226,7 @@ def next_question():
                 "finished": True,
                 "message": result.get("message"),
                 "qa_history": result.get("qa_history", []),
+                "violations": result.get("violations", []),
                 "evaluation": {
                     "total_score": evaluation.get("total_score", 0),
                     "overall_feedback": evaluation.get("overall_feedback", "No feedback generated."),
@@ -228,7 +240,8 @@ def next_question():
             "success": True,
             "finished": False,
             "next_question": result.get("next_question"),
-            "qa_history": result.get("qa_history", [])
+            "qa_history": result.get("qa_history", []),
+            "violations": result.get("violations", [])
         })
 
     except Exception as e:
