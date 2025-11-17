@@ -32,8 +32,7 @@ Candidate Name: {candidate_name}
 Candidate Email: {candidate_email}
 Company Name: {company_name}
 Contact Information: {contact_info}
-
-Write a formal recruitment email inviting the candidate to an interview on {interview_date}.
+Write a formal recruitment email inviting the candidate to an interview on: {interview_date}.
 
 Include:
 - A polite greeting
