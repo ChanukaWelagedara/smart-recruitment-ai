@@ -6,7 +6,8 @@ def download_pdf_from_url(url, save_dir="data/cv_pdfs", filename=None):
     try:
         os.makedirs(save_dir, exist_ok=True)
         if not filename:
-            filename = url.split("/")[-1]
+            # Extract filename from URL and remove query parameters
+            filename = url.split("/")[-1].split("?")[0]
         file_path = os.path.join(save_dir, filename)
         response = requests.get(url)
         if response.status_code == 200:

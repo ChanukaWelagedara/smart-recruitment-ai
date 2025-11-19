@@ -30,7 +30,8 @@ class LangChainCVInfoExtractorAgent(BaseAgent):
     def extract_profile_info(self, cv_url: str):
         try:
             # Prepare file path
-            filename = cv_url.split("/")[-1]
+            # Extract filename from URL and remove query parameters
+            filename = cv_url.split("/")[-1].split("?")[0]
             save_dir = "data/cv_pdfs"
             os.makedirs(save_dir, exist_ok=True)
             file_path = os.path.join(save_dir, filename)
