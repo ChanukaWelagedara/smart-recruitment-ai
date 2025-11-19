@@ -55,7 +55,8 @@ def process_api_job_cvs(api_url):
         print(f"Checking CV for {full_name} from URL: {cv_url}")
 
         # Define local file path based on CV file name from URL
-        cv_filename = cv_url.split("/")[-1]
+        # Extract filename and remove query parameters
+        cv_filename = cv_url.split("/")[-1].split("?")[0]
         local_cv_dir = "data/cv_pdfs"
         os.makedirs(local_cv_dir, exist_ok=True)
         local_cv_path = os.path.join(local_cv_dir, cv_filename)

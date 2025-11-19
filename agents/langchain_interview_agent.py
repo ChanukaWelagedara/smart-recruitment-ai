@@ -3,7 +3,7 @@ import uuid
 from database.langchain_vector_db import LangChainVectorDB
 from config.langchain_config import LangChainConfig
 from agents.base_agent import BaseAgent
-
+import re
 class LangChainInterviewAgent(BaseAgent):
     def __init__(self):
         super().__init__("interview_agent")
@@ -188,7 +188,221 @@ Only return the question text.
             question = self._invoke_llm(prompt)
             full_qa.append({"question": question, "answer": ""})
 
-        return full_qa
+            return full_qa
+
+    def _evaluate_interview(self, cv_summary: str, qa_history: list, violations: list = None) -> dict:
+        """
+        Evaluate the candidate's answers using the LLM.
+        Handles escaped characters, code fences, single quotes, unquoted keys, and invalid JSON.
+        """
+        import json, re
+
+        qa_history = qa_history or []
+        violations = violations or []
+
+        # Build conversation string for LLM prompt
+        history_str = ""
+        for i, pair in enumerate(qa_history, 1):
+            q = pair.get("question", "").strip()
+            a = pair.get("answer", "").strip()
+            history_str += f"Q{i}: {q}\nA{i}: {a}\n"
+
+        # Build violations string
+        violations_str = ""
+        if violations:
+            for v in violations:
+                violations_str += f"- {v.get('name', '')} at {v.get('timestamp', '')}\n"
+
+        # LLM prompt
+        prompt = f"""
+    You are a senior technical interviewer.
+
+    Candidate CV Summary:
+    \"\"\"{cv_summary}\"\"\"
+
+    Interview Transcript:
+    {history_str}
+
+    Behavioral Violations:
+    {violations_str if violations_str else 'None'}
+
+    For each question, assign:
+    - "question": the question asked
+    - "answer": the candidate's answer
+    - "score": 0-20
+    - "feedback": 1-2 sentences
+    - "masked": false
+
+    Also provide:
+    - "total_score": sum of scores
+    - "overall_feedback": summary of performance
+
+    Return ONLY valid JSON. Do NOT include any commentary or code fences.
+    """
+
+        # Robust JSON extraction
+        def _extract_json_from_llm(response_str: str) -> dict:
+            # Remove code fences and leading/trailing quotes
+            cleaned = re.sub(r"```(?:json)?", "", response_str).strip().strip("'\"")
+
+            # Replace single quotes with double quotes (only for values)
+            cleaned = re.sub(r'(?<!")\'([^\']*?)\'(?!")', r'"\1"', cleaned)
+
+            # Quote unquoted keys
+            cleaned = re.sub(r'([{,]\s*)([a-zA-Z0-9_]+)\s*:', r'\1"\2":', cleaned)
+
+            # Find first balanced JSON object
+            stack = []
+            start_idx = None
+            for i, c in enumerate(cleaned):
+                if c == '{':
+                    if not stack:
+                        start_idx = i
+                    stack.append('{')
+                elif c == '}':
+                    stack.pop()
+                    if not stack and start_idx is not None:
+                        json_str = cleaned[start_idx:i+1]
+                        try:
+                            return json.loads(json_str)
+                        except json.JSONDecodeError:
+                            break
+            raise ValueError("No valid JSON found in LLM output")
+
+        try:
+            # Invoke LLM
+            response_str = self._invoke_llm(prompt)
+            print("Raw LLM response:", repr(response_str))
+
+            # Parse JSON robustly
+            evaluation_json = _extract_json_from_llm(response_str)
+
+            # Ensure keys exist
+            evaluation_json.setdefault("questions", [])
+            evaluation_json.setdefault("question_wise", evaluation_json.get("questions", []))
+            evaluation_json.setdefault("violations", violations)
+            evaluation_json.setdefault(
+                "total_score", sum(q.get("score", 0) for q in evaluation_json.get("questions", []))
+            )
+            evaluation_json.setdefault(
+                "overall_feedback", "No feedback returned by LLM."
+            )
+
+            return evaluation_json
+
+        except Exception as e:
+            # Fallback: return original QA with zero scores
+            questions_list = []
+            for q in qa_history:
+                questions_list.append({
+                    "question": q.get("question", ""),
+                    "answer": q.get("answer", ""),
+                    "score": 0,
+                    "feedback": "LLM evaluation failed.",
+                    "masked": False
+                })
+
+            return {
+                "questions": questions_list,
+                "question_wise": questions_list,
+                "violations": violations or [],
+                "total_score": 0,
+                "overall_feedback": f"LLM evaluation failed: {str(e)}"
+            }
+
+
+# ######################################################################################################
+#     def _evaluate_interview(self, cv_summary: str, qa_history: list, violations: list = None) -> dict:
+#         qa_history = qa_history or []
+#         violations = violations or []
+
+#         # Build interview history string
+#         history_str = ""
+#         for i, pair in enumerate(qa_history, 1):
+#             q = pair.get("question", "").strip()
+#             a = pair.get("answer", "").strip()
+#             history_str += f"Q{i}: {q}\nA{i}: {a}\n"
+
+#         # Build violations string
+#         violations_str = ""
+#         if violations:
+#             for v in violations:
+#                 violations_str += f"- {v.get('name', '')} at {v.get('timestamp', '')}\n"
+
+#         # LLM prompt
+#         prompt = f"""
+#     You are a senior technical interviewer.
+
+#     Candidate CV Summary:
+#     \"\"\"{cv_summary}\"\"\"
+
+#     Interview Transcript:
+#     {history_str}
+
+#     Behavioral Violations:
+#     {violations_str if violations_str else 'None'}
+
+#     For each question, assign:
+#     - "question": the question asked
+#     - "answer": the candidate's answer
+#     - "score": 0-20
+#     - "feedback": 1-2 sentences on the answer
+#     - "masked": false
+
+#     Include violations as-is. Also provide:
+#     - "total_score": sum of scores
+#     - "overall_feedback": a 2-3 sentence summary of performance
+
+#     IMPORTANT: Return strictly JSON. No text, no backticks, no explanations.
+#     """
+
+#         try:
+#             # Call LLM
+#             response_str = self._invoke_llm(prompt)
+#             print("LLM raw evaluation output:", repr(response_str))
+
+#             # Remove any leftover markdown or backticks
+#             import re
+#             cleaned = re.sub(r"```.*?```", "", response_str, flags=re.DOTALL).strip()
+
+#             # Attempt JSON parse
+#             evaluation_json = json.loads(cleaned)
+
+#             # Ensure required keys exist
+#             evaluation_json.setdefault("questions", [])
+#             evaluation_json.setdefault("question_wise", evaluation_json.get("questions", []))
+#             evaluation_json.setdefault("violations", violations)
+#             evaluation_json.setdefault(
+#                 "total_score", sum(q.get("score", 0) for q in evaluation_json.get("questions", []))
+#             )
+#             evaluation_json.setdefault("overall_feedback", "No feedback returned by LLM.")
+
+#             return evaluation_json
+
+#         except Exception as e:
+#             # Fallback in case JSON parsing fails
+#             print("LLM evaluation failed:", e)
+#             questions_list = []
+#             for q in qa_history:
+#                 questions_list.append({
+#                     "question": q.get("question", ""),
+#                     "answer": q.get("answer", ""),
+#                     "score": 0,
+#                     "feedback": "LLM evaluation failed.",
+#                     "masked": False
+#                 })
+
+#             return {
+#                 "questions": questions_list,
+#                 "question_wise": questions_list,
+#                 "violations": violations or [],
+#                 "total_score": 0,
+#                 "overall_feedback": "LLM evaluation failed."
+#             }
+
+
+
+###############################################################################################################################
     
     # def _evaluate_interview(self, cv_summary: str, qa_history: list, violations: list = None) -> dict:
     #     qa_history = qa_history or []
@@ -388,113 +602,113 @@ Only return the question text.
     #     return evaluation_json
 
 
-    def _evaluate_interview(self, cv_summary: str, qa_history: list, violations: list=None  ) -> dict:
-        qa_history=qa_history or []
-        violations=violations or []
+#     def _evaluate_interview(self, cv_summary: str, qa_history: list, violations: list=None  ) -> dict:
+#         qa_history=qa_history or []
+#         violations=violations or []
 
-        history_str = ""
-        for i, pair in enumerate(qa_history, 1):
-            q = pair.get("question", "").strip()
-            a = pair.get("answer", "").strip()
-            history_str += f"Q{i}: {q}\nA{i}: {a}\n"
+#         history_str = ""
+#         for i, pair in enumerate(qa_history, 1):
+#             q = pair.get("question", "").strip()
+#             a = pair.get("answer", "").strip()
+#             history_str += f"Q{i}: {q}\nA{i}: {a}\n"
         
-        violations = violations or []
-        violations_str=""
-        if violations:
-            for v in violations:
-                violations_str+=f"- {v.get('name', '')} at {v.get('timestamp', '')}\n"
+#         violations = violations or []
+#         violations_str=""
+#         if violations:
+#             for v in violations:
+#                 violations_str+=f"- {v.get('name', '')} at {v.get('timestamp', '')}\n"
 
-        prompt = f"""
-You are a senior technical interviewer.
+#         prompt = f"""
+# You are a senior technical interviewer.
 
-Candidate CV Summary:
-\"\"\"{cv_summary}\"\"\"
+# Candidate CV Summary:
+# \"\"\"{cv_summary}\"\"\"
 
-Interview Transcript:
-{history_str}
+# Interview Transcript:
+# {history_str}
 
-Behavioral Violations:
-{violations_str if violations_str else 'None'}
+# Behavioral Violations:
+# {violations_str if violations_str else 'None'}
 
-Evaluate each individual answer. For each of the 5 questions, assign:
-- "question": the question asked
-- "answer": the candidate's answer
-- "score": a number out of 20
-- "feedback": 1-2 sentences of feedback on that specific answer
-- "masked:false"
-Also, include the violations list as-is.
+# Evaluate each individual answer. For each of the 5 questions, assign:
+# - "question": the question asked
+# - "answer": the candidate's answer
+# - "score": a number out of 20
+# - "feedback": 1-2 sentences of feedback on that specific answer
+# - "masked:false"
+# Also, include the violations list as-is.
 
-Then, also include:
-- "total_score": a number out of 100 (sum of the individual scores)
-- "overall_feedback": a 2-3 sentence summary of the candidate's performance
+# Then, also include:
+# - "total_score": a number out of 100 (sum of the individual scores)
+# - "overall_feedback": a 2-3 sentence summary of the candidate's performance
 
-Return ONLY a valid JSON object exactly like this, with NO extra explanation or commentary:
+# Return ONLY a valid JSON object exactly like this, with NO extra explanation or commentary:
 
-{{
-"questions": [
-    {{"question": "...", 
-    "answer": "...", 
-    "score": 18, 
-    "feedback": "..."}},
-    ...
-],
-"violations": {violations},
-"total_score": 84,
-"overall_feedback": "..."
-}}
-"""
-        try:
-            response_str = self._invoke_llm(prompt)
-            print("LLM raw evaluation response:", repr(response_str))
-            cleaned = (
-                response_str.replace("```json", "")
-                .replace("```", "")
-                .replace("\n", "")
-                .strip()
-            )
+# {{
+# "questions": [
+#     {{"question": "...", 
+#     "answer": "...", 
+#     "score": 18, 
+#     "feedback": "..."}},
+#     ...
+# ],
+# "violations": {violations},
+# "total_score": 84,
+# "overall_feedback": "..."
+# }}
+# """
+#         try:
+#             response_str = self._invoke_llm(prompt)
+#             print("LLM raw evaluation response:", repr(response_str))
+#             cleaned = (
+#                 response_str.replace("```json", "")
+#                 .replace("```", "")
+#                 .replace("\n", "")
+#                 .strip()
+#             )
 
-            evaluation_json = json.loads(cleaned)
+#             evaluation_json = json.loads(cleaned)
 
-        except Exception as e:
-            # Fallback: set default scores in case LLM fails or JSON parsing fails
-            try:
-                num_questions = len(qa_history)
-                deduction_per_violation = 2
-                total_deduction = deduction_per_violation * len(violations) * num_questions
+#         except Exception as e:
+#             # Fallback: set default scores in case LLM fails or JSON parsing fails
+#             try:
+#                 num_questions = len(qa_history)
+#                 deduction_per_violation = 2
+#                 total_deduction = deduction_per_violation * len(violations) * num_questions
 
-                questions_list = []
-                for q in qa_history:
-                    feedback = q.get("feedback") or "Auto-evaluated"
-                    score = max(0, 20 - deduction_per_violation * len(violations))
-                   # score = max(0, 20 - deduction_per_violation * len(violations))
-                    questions_list.append({
-                        "question": q.get("question", ""),
-                        "answer": q.get("answer", ""),
-                        "score": 20,
-                        "feedback":feedback,
-                        "masked": False
-                    })
-                total_score = max(0, 20 * num_questions - total_deduction)
+#                 questions_list = []
+#                 for q in qa_history:
+#                     feedback = q.get("feedback") or "Auto-evaluated"
+#                     score = max(0, 20 - deduction_per_violation * len(violations))
+#                    # score = max(0, 20 - deduction_per_violation * len(violations))
+#                     questions_list.append({
+#                         "question": q.get("question", ""),
+#                         "answer": q.get("answer", ""),
+#                         "score": 20,
+#                         "feedback":feedback,
+#                         "masked": False
+#                     })
+#                 total_score = max(0, 20 * num_questions - total_deduction)
 
-                evaluation_json = {
-                    "questions": questions_list,
-                    "question_wise": questions_list,
-                    "violations": violations or [],
-                    "total_score": total_score,
-                    "overall_feedback": f"{len(violations)} violations recorded. Candidate performance considered."
-                }
+#                 evaluation_json = {
+#                     "questions": questions_list,
+#                     "question_wise": questions_list,
+#                     "violations": violations or [],
+#                     "total_score": total_score,
+#                     "overall_feedback": f"{len(violations)} violations recorded. Candidate performance considered."
+#                 }
 
-            except Exception as inner_e:
-                # Last-resort: in case fallback itself fails
-                evaluation_json = {
-                    "error": f"Error evaluating interview: {str(inner_e)}",
-                    "raw_response": response_str if 'response_str' in locals() else None,
-                    "questions": [],
-                    "question_wise": [],
-                    "violations": violations or []
-                }
+#             except Exception as inner_e:
+#                 # Last-resort: in case fallback itself fails
+#                 evaluation_json = {
+#                     "error": f"Error evaluating interview: {str(inner_e)}",
+#                     "raw_response": response_str if 'response_str' in locals() else None,
+#                     "questions": [],
+#                     "question_wise": [],
+#                     "violations": violations or []
+#                 }
 
-            return evaluation_json
+#             return evaluation_json
 
         # try:
         #     response_str = self._invoke_llm(prompt)

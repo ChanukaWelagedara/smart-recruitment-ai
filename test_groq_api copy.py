@@ -1,26 +1,65 @@
-from groq import Groq
-from dotenv import load_dotenv
-import os
+# pipeline {
+#     agent any
 
-# Load environment variables from .env file
-load_dotenv()
+#     environment {
+#         VPS = 'ubuntu@15.235.210.227'        // Your VPS user and IP
+#         SSH_KEY = credentials('vps-ssh')     // Jenkins credential ID for VPS SSH
+#     }
 
-# Get the API key from environment variables
-api_key = os.getenv("GROQ_API_KEY")
+#     stages {
+#         stage('Pull from GitHub') {
+#             steps {
+#                 echo "Pulling latest code from GitHub..."
+#                 git branch: 'main',
+#                     credentialsId: 'github-creds',   // Jenkins SSH key for GitHub
+#                     url: 'git@github.com:ChanukaWelagedara/smart-recruitment-ai.git'
+#             }
+#         }
 
-if not api_key:
-    raise ValueError("GROQ_API_KEY is missing in your environment variables.")
+#         stage('Deploy to VPS') {
+#             steps {
+#                 echo "Deploying to VPS..."
+#                 sshagent(['vps-ssh']) {
+#                     sh """
+#                     ssh -o StrictHostKeyChecking=no $VPS '
+#                         set -e
 
-print(f"Using API key: {api_key[:10]}... (length={len(api_key)})")
+#                         echo "Navigating to project directory..."
+#                         cd ~/FYGP/smart-recruitment-ai || exit 1
 
-client = Groq(api_key=api_key)
+#                         echo "Updating Git repository..."
+#                         git fetch origin main
+#                         git reset --hard origin/main
+                        
+#                         echo "Ensuring cv_chroma_db folder exists on VPS..."
+#                         mkdir -p ~/FYGP/smart-recruitment-ai/cv_chroma_db
 
-try:
-    response = client.chat.completions.create(
-        model="llama3-70b-8192",  # Full model name
-        messages=[{"role": "user", "content": "Hello Groq!"}],
-        max_tokens=10,
-    )
-    print("Success:", response.choices[0].message.content)
-except Exception as e:
-    print("Error:", e)
+#                         echo "Stopping existing Docker container..."
+#                         sudo docker compose down || true
+
+#                         echo "Removing old images (optional, forces rebuild)..."
+#                         sudo docker image prune -af
+
+#                         echo "Building Docker image without cache..."
+#                         sudo docker compose build --no-cache
+
+#                         echo "Starting Docker container..."
+#                         sudo docker compose up -d
+
+#                         echo "Deployment complete!"
+#                     '
+#                     """
+#                 }
+#             }
+#         }
+#     }
+
+#     post {
+#         success {
+#             echo "Pipeline finished successfully!"
+#         }
+#         failure {
+#             echo "Pipeline failed. Check Jenkins logs for details."
+#         }
+#     }
+# }

@@ -199,6 +199,60 @@ def start_interview():
             "message": "Internal server error", 
             "error": tb}), 500
 
+# @app.route('/next_question', methods=['POST'])
+# def next_question():
+#     try:
+#         content = request.json or {}
+#         email = content.get("email")
+#         qa_history = content.get("qa_history", [])
+#         violations = content.get("violations", [])
+
+#         if not email:
+#             return jsonify({"success": False, "message": "Missing email"}), 400
+
+#         result = task_manager.run_task("continue_interview", {
+#             "task_type": "continue_interview",
+#             "email": email,
+#             "qa_history": qa_history,
+#             "violations": violations
+#         })
+
+#         if "error" in result:
+#             return jsonify({"success": False, "message": result["error"]}), 500
+#         if result.get("finished"):
+#             evaluation = result.get("evaluation", {})
+#             return jsonify({
+#                 "success": True,
+#                 "finished": True,
+#                 "message": result.get("message"),
+#                 "qa_history": result.get("qa_history", []),
+#                 "violations": result.get("violations", []),
+#                 "evaluation": {
+#                     "total_score": evaluation.get("total_score", 0),
+#                     "overall_feedback": evaluation.get("overall_feedback", "No feedback generated."),
+#                     "question_wise": evaluation.get("question_wise", [])
+#                 }
+#             })
+
+
+      
+#         return jsonify({
+#             "success": True,
+#             "finished": False,
+#             "next_question": result.get("next_question"),
+#             "qa_history": result.get("qa_history", []),
+#             "violations": result.get("violations", [])
+#         })
+
+#     except Exception as e:
+#         tb = traceback.format_exc()
+#         return jsonify({
+#             "success": False,
+#             "message": "Internal server error",
+#             "error": str(e),
+#             "trace": tb
+#         }), 500
+
 @app.route('/next_question', methods=['POST'])
 def next_question():
     try:
@@ -210,6 +264,7 @@ def next_question():
         if not email:
             return jsonify({"success": False, "message": "Missing email"}), 400
 
+        # Run the interview task
         result = task_manager.run_task("continue_interview", {
             "task_type": "continue_interview",
             "email": email,
@@ -217,25 +272,25 @@ def next_question():
             "violations": violations
         })
 
+        # Handle error from agent
         if "error" in result:
             return jsonify({"success": False, "message": result["error"]}), 500
+
+        # If interview finished
         if result.get("finished"):
             evaluation = result.get("evaluation", {})
+            
+            # Directly use the LLM-generated feedback instead of placeholders
             return jsonify({
                 "success": True,
                 "finished": True,
                 "message": result.get("message"),
                 "qa_history": result.get("qa_history", []),
                 "violations": result.get("violations", []),
-                "evaluation": {
-                    "total_score": evaluation.get("total_score", 0),
-                    "overall_feedback": evaluation.get("overall_feedback", "No feedback generated."),
-                    "question_wise": evaluation.get("question_wise", [])
-                }
+                "evaluation": evaluation  # pass actual feedback here
             })
 
-
-      
+        # If interview not finished, return next question
         return jsonify({
             "success": True,
             "finished": False,
@@ -252,7 +307,6 @@ def next_question():
             "error": str(e),
             "trace": tb
         }), 500
-
 
 @app.route('/complete_interview', methods=['POST'])
 def complete_interview():
