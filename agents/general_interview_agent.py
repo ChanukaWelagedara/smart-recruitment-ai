@@ -16,7 +16,12 @@ class GeneralInterviewAgent(BaseAgent):
 
         # ---------------- START INTERVIEW ----------------
         if task_type == "start_general_interview":
-            prompt = f"Generate a short, non-technical interview question for a candidate. Keep it concise."
+            prompt = (
+    "You are an HR interviewer starting a soft-skills interview. "
+    "Ask the first question in a natural, conversational flow. "
+    "Start with a warm, friendly, introductory question (e.g., background, personal story, interests). "
+    "Keep it short, human-like, and non-technical."
+)
             try:
                 ai_message = self.llm.invoke(prompt)
                 first_question = ai_message.content.strip()
@@ -40,9 +45,17 @@ class GeneralInterviewAgent(BaseAgent):
             # Generate next question dynamically
             history_text = "\n".join([f"Q: {qa['question']}\nA: {qa['answer']}" for qa in qa_history])
             prompt = (
-                f"Given the previous interview questions and answers:\n{history_text}\n"
-                "Generate a new, short, non-technical interview question that is relevant and not repetitive."
-            )
+            f"You are an HR interviewer conducting a soft-skills interview.\n"
+            f"Here is the conversation so far:\n{history_text}\n\n"
+            "Now ask the *next logical non-technical question* that follows the interview flow.\n"
+            "Follow these rules:\n"
+            "1. Do NOT repeat previous questions.\n"
+            "2. Each question must naturally follow from the candidate's last answer.\n"
+            "3. Keep it conversational, human-like, and short.\n"
+            "4. Focus on personality, background, communication, teamwork, interests, goals, etc.\n"
+            "Ask only ONE question."
+        )
+
 
             try:
                 ai_message = self.llm.invoke(prompt)
