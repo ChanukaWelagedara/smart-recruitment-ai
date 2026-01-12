@@ -9,7 +9,7 @@ pipeline {
         stage('Pull from GitHub') {
             steps {
                 echo "Pulling latest code from GitHub..."
-                // Code is automatically pulled when using SCM in Jenkins job configuration
+                
             }
         }
         
@@ -32,17 +32,10 @@ EOF
                         docker-compose down || true
                         
                         echo "Cleaning up Docker system to free space..."
-                        # Remove unused containers and images (not volumes to preserve data)
-                        docker system prune -f
+                        docker-compose down --rmi all --volumes --remove-orphans || true
                         
-                        # Remove dangling images and build cache
-                        docker builder prune -f
-                        
-                        # Remove unused images older than 24h (keeps recent ones)
-                        docker image prune -a -f
-                        
-                        echo "Building Docker image with cache (faster, less space)..."
-                        docker-compose build
+                        echo "Building Docker image without cache..."
+                        docker-compose build --no-cache
                         
                         echo "Starting Docker container..."
                         docker-compose up -d
