@@ -120,22 +120,21 @@ CV Summary:
 \"\"\"
 {cv_summary}
 \"\"\"
-
 Job Description:
 \"\"\"{job_description}\"\"\"
-**Instructions:**
-1. First, identify key **skills, technologies, and responsibilities** mentioned in the job post (e.g., MERN, APIs, React, AWS, CI/CD).
-2. Then, read the CV summary and find the **most relevant experience or skills** that match the job requirements.
-3. Based on this overlap, generate **one strong technical question** that:
-   - Tests the candidate’s real understanding or problem-solving skills.
-   - Is relevant to both the job and the candidate’s CV.
-   - Is phrased clearly and professionally.
-   - Focuses on reasoning, system design, or applied technical skill (not trivia).
 
-**Example Output:**
-- "Can you explain how you optimized a MongoDB query for scalability in one of your past MERN projects?"
-- "In your experience deploying React and Node.js applications, what challenges did you face with AWS or CI/CD pipelines?"
-Only return the question text — no explanation or commentary.
+Few-shot examples of beginner-level questions:
+Example 1: What is a variable in programming, and how do you use it?
+Example 2: What is a function, and why do we use functions?
+Example 3: What is a loop, and how does it help in programming?
+
+Instructions:
+1. Identify key skills, technologies, and responsibilities from the job post.
+2. Analyze the CV for relevant experience or skills.
+3. Determine the candidate level (intern, junior, senior) based on the job description.
+4. Start with an **easy/beginner-level question**. Do NOT mention frameworks, libraries, or advanced concepts in the first question.
+5. The question must be relevant to the candidate's background and the job role.
+6. Only return the question text.
 """
         return self._invoke_llm(prompt)
 
@@ -147,7 +146,8 @@ Only return the question text — no explanation or commentary.
             history_str += f"Q{i}: {q}\nA{i}: {a}\n"
 
         prompt = f"""
-You are an expert technical interviewer continuing an interview with a web developer.
+You are an expert technical interviewer continuing an interview with a candidate, 
+tailoring questions to their role and expected skill level from the job description.
 
 Here’s the candidate’s CV Summary:
 \"\"\"
@@ -157,8 +157,12 @@ Here’s the candidate’s CV Summary:
 Here is the conversation so far:
 {history_str}
 
-Now, based on the candidate's last answer, ask the **next technical question**. Go deeper into reasoning, architecture, tools, deployment, etc.
-Only return the question text.
+Instructions:
+1. Using the candidate's last answer as context, generate the **next technical question**.
+2. Increase difficulty gradually — start easy and make each subsequent question slightly more challenging.
+3. Focus on reasoning, architecture, tools, deployment, performance, and real-world trade-offs relevant to the role.
+4. Ensure each question aligns with the candidate's background and the job requirements.
+5. Only return the question text — no explanation or commentary.
 """
         return self._invoke_llm(prompt)
 
@@ -173,7 +177,8 @@ Only return the question text.
                 history_str += f"Q{i}: {q}\nA{i}: {a}\n"
 
             prompt = f"""
-You are an expert technical interviewer continuing an interview with a web developer.
+You are an expert technical interviewer continuing an interview with a candidate, 
+tailoring questions to their role and expected skill level from the job description.
 
 Here’s the candidate’s CV Summary:
 \"\"\"{cv_summary}\"\"\"
@@ -181,9 +186,9 @@ Here’s the candidate’s CV Summary:
 Here is the conversation so far:
 {history_str}
 
-Now, based on the candidate's last answer, ask the **next technical question**.
-Make sure the question is technical, relevant to web development, and progressively deeper in complexity.
-Only return the question text.
+Using the candidate's last answer as context, ask the next technical question.
+Increase difficulty step-by-step, focusing on reasoning, architecture, tools, deployment,
+performance, and real-world trade-offs relevant to the candidate's field.
 """
             question = self._invoke_llm(prompt)
             full_qa.append({"question": question, "answer": ""})

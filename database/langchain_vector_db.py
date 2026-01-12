@@ -49,7 +49,7 @@ class LangChainVectorDB:
                         print(f"Duplicate document detected. Skipping: {doc_id}")
                         return False
                 except Exception as e:
-                    print(f"❌ Error during duplicate check: {e}")
+                    print(f"Error during duplicate check: {e}")
                     return False
             else:
                 print(f"No file hash provided for {doc_id}. Skipping deduplication check.")
