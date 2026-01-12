@@ -32,10 +32,17 @@ EOF
                         docker-compose down || true
                         
                         echo "Cleaning up Docker system to free space..."
-                        docker-compose down --rmi all --volumes --remove-orphans || true
+                        # Remove unused containers and images (not volumes to preserve data)
+                        docker system prune -f
                         
-                        echo "Building Docker image without cache..."
-                        docker-compose build --no-cache
+                        # Remove dangling images and build cache
+                        docker builder prune -f
+                        
+                        # Remove unused images older than 24h (keeps recent ones)
+                        docker image prune -a -f
+                        
+                        echo "Building Docker image with cache (faster, less space)..."
+                        docker-compose build
                         
                         echo "Starting Docker container..."
                         docker-compose up -d
