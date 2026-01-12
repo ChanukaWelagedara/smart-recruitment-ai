@@ -11,11 +11,13 @@ pipeline {
         stage('Checkout') {
             steps {
                 script {
-                    // Change to the smart-recruitment-ai directory
+                    // Check current directory structure
                     sh '''
-                        cd smart-recruitment-ai
                         echo "Working directory: $(pwd)"
+                        echo "Contents:"
                         ls -la
+                        echo "Looking for required files:"
+                        ls -la Dockerfile docker-compose.prod.yml .env.template || echo "Some files missing"
                     '''
                 }
             }
@@ -26,10 +28,14 @@ pipeline {
                 script {
                     // Verify .env file exists
                     sh '''
-                        cd smart-recruitment-ai
                         if [ ! -f .env ]; then
                             echo "Error: .env file not found!"
                             echo "Please create .env file from .env.template and configure your API keys"
+                            if [ -f .env.template ]; then
+                                echo "Found .env.template - you can copy it to .env and configure"
+                                echo "Contents of .env.template:"
+                                cat .env.template
+                            fi
                             exit 1
                         fi
                         echo ".env file found"
@@ -47,7 +53,6 @@ pipeline {
                 script {
                     // Stop and remove existing services
                     sh '''
-                        cd smart-recruitment-ai
                         echo "Stopping existing deployment..."
                         docker-compose -f ${COMPOSE_FILE} down || true
                         echo "Previous deployment stopped"
@@ -61,7 +66,6 @@ pipeline {
                 script {
                     // Build and deploy using docker-compose
                     sh '''
-                        cd smart-recruitment-ai
                         echo "Building and deploying application..."
                         docker-compose -f ${COMPOSE_FILE} up -d --build
                         echo "Application deployed successfully"
@@ -75,7 +79,6 @@ pipeline {
                 script {
                     // Wait for service to be ready and perform health check
                     sh '''
-                        cd smart-recruitment-ai
                         echo "Waiting for application to start..."
                         sleep 15
                         
@@ -145,7 +148,6 @@ pipeline {
             script {
                 // Show deployment status
                 sh '''
-                    cd smart-recruitment-ai
                     echo "=== Deployment Status ==="
                     docker-compose -f ${COMPOSE_FILE} ps
                 '''
@@ -155,7 +157,6 @@ pipeline {
         success {
             script {
                 sh '''
-                    cd smart-recruitment-ai
                     echo "🎉 Deployment successful!"
                     echo ""
                     echo "=== Service Information ==="
@@ -176,7 +177,6 @@ pipeline {
         failure {
             script {
                 sh '''
-                    cd smart-recruitment-ai
                     echo "❌ Deployment failed!"
                     echo ""
                     echo "=== Service Status ==="
