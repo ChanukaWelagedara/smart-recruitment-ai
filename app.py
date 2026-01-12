@@ -453,6 +453,15 @@ def interview_page():
 def general_interview_page():
     return render_template('general_interview.html')
 
+# Health check endpoint for deployment monitoring
+@app.route('/health')
+def health_check():
+    return jsonify({
+        "status": "healthy",
+        "timestamp": datetime.now().isoformat(),
+        "service": "smart-recruitment-ai"
+    })
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False, use_reloader=False)
