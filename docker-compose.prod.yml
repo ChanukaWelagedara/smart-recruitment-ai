@@ -1,0 +1,25 @@
+version: "3.8"
+
+services:
+  smart-ai:
+    build: .
+    image: smart-recruitment-ai:latest
+    container_name: smart-ai
+    restart: always
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./results:/app/results 
+      - ./cv_chroma_db:/app/cv_chroma_db
+      - ./data:/app/data
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    environment:
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
