@@ -10,5 +10,5 @@ def fetch_candidate_data(api_url: str):
         else:
             raise ValueError("API returned failure status")
     except Exception as e:
-        print(f"❌ Failed to fetch candidate data: {e}")
+        print(f"Failed to fetch candidate data: {e}")
         return None

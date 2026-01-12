@@ -15,8 +15,8 @@ def download_pdf_from_url(url, save_dir="data/cv_pdfs", filename=None):
                 f.write(response.content)
             return file_path
         else:
-            print(f"❌ Failed to download file: {url} (status code {response.status_code})")
+            print(f"Failed to download file: {url} (status code {response.status_code})")
             return None
     except Exception as e:
-        print(f"❌ Error downloading PDF from URL: {e}")
+        print(f"Error downloading PDF from URL: {e}")
         return None

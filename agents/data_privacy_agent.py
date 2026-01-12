@@ -10,7 +10,7 @@ class DataPrivacyAgent(BaseAgent):
 
     def perform_task(self, data: dict, context: dict = None):
         candidate = data.get("candidate_data", {})
-        # Basic example check for sensitive info
+        
         if any(key in candidate for key in ["ssn", "credit_card", "password"]):
             return {"error": "PII detected — operation not allowed."}
         return {"status": "ok"}
