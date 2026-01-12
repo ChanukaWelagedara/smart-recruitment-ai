@@ -51,8 +51,13 @@ EOF
                             mkdir -p results cv_chroma_db data temp_uploads
                             echo "Required directories created"
                             
-                            # Verify API key is set (show first 10 characters only for security)
-                            echo "GROQ API Key configured: ${GROQ_API_KEY:0:10}..."
+                            # Verify API key is set (show length only for security)
+                            if [ -n "${GROQ_API_KEY}" ]; then
+                                echo "GROQ API Key configured successfully (length: $(echo -n "${GROQ_API_KEY}" | wc -c) characters)"
+                            else
+                                echo "ERROR: GROQ API Key is empty!"
+                                exit 1
+                            fi
                         '''
                     }
                 }
