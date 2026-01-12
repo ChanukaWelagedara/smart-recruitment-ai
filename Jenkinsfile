@@ -31,9 +31,6 @@ EOF
                         echo "Stopping existing Docker container..."
                         docker-compose down || true
                         
-                        echo "Removing old images (forces rebuild)..."
-                        docker image prune -af
-                        
                         echo "Building Docker image without cache..."
                         docker-compose build --no-cache
                         
