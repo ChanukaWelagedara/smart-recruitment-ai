@@ -5,45 +5,56 @@ pipeline {
         COMPOSE_FILE = 'docker-compose.prod.yml'
         SERVICE_NAME = 'smart-ai'
         APP_PORT = '5000'
+        PATH = "/var/jenkins_home/bin:${env.PATH}"
     }
     
     stages {
         stage('Checkout') {
             steps {
                 script {
-                    // Check current directory structure
                     sh '''
                         echo "Working directory: $(pwd)"
+                        echo "PATH: $PATH"
+                        echo "Checking docker-compose:"
+                        which docker-compose || echo "docker-compose not found in PATH"
+                        docker-compose --version || echo "docker-compose command failed"
+                        
                         echo "Contents:"
                         ls -la
                         echo "Looking for required files:"
-                        ls -la Dockerfile docker-compose.prod.yml .env.template || echo "Some files missing"
+                        ls -la Dockerfile docker-compose.prod.yml || echo "Some files missing"
                     '''
                 }
             }
         }
         
-        stage('Environment Check') {
+        stage('Environment Setup') {
             steps {
                 script {
-                    // Verify .env file exists
-                    sh '''
-                        if [ ! -f .env ]; then
-                            echo "Error: .env file not found!"
-                            echo "Please create .env file from .env.template and configure your API keys"
-                            if [ -f .env.template ]; then
-                                echo "Found .env.template - you can copy it to .env and configure"
-                                echo "Contents of .env.template:"
-                                cat .env.template
-                            fi
-                            exit 1
-                        fi
-                        echo ".env file found"
-                        
-                        # Create required directories
-                        mkdir -p results cv_chroma_db data temp_uploads
-                        echo "Required directories created"
-                    '''
+                    withCredentials([string(credentialsId: 'groq-api-key', variable: 'GROQ_API_KEY')]) {
+                        sh '''
+                            echo "Creating .env file from Jenkins secrets..."
+                            cat > .env << EOF
+# Smart Recruitment AI Environment Variables
+GROQ_API_KEY=${GROQ_API_KEY}
+FLASK_ENV=production
+FLASK_DEBUG=False
+MAX_CONTENT_LENGTH=16777216
+UPLOAD_FOLDER=./temp_uploads
+SECRET_KEY=$(openssl rand -hex 32)
+LOG_LEVEL=INFO
+PYTHONUNBUFFERED=1
+EOF
+                            echo ".env file created successfully"
+                            
+                            # Create required directories
+                            mkdir -p results cv_chroma_db data temp_uploads
+                            echo "Required directories created"
+                            
+                            # Verify API key is set (show first 10 characters only for security)
+                            echo "GROQ API Key configured: ${GROQ_API_KEY:0:10}..."
+                        '''
+                    }
                 }
             }
         }
@@ -51,7 +62,6 @@ pipeline {
         stage('Stop Previous Deployment') {
             steps {
                 script {
-                    // Stop and remove existing services
                     sh '''
                         echo "Stopping existing deployment..."
                         docker-compose -f ${COMPOSE_FILE} down || true
@@ -64,7 +74,6 @@ pipeline {
         stage('Build and Deploy') {
             steps {
                 script {
-                    // Build and deploy using docker-compose
                     sh '''
                         echo "Building and deploying application..."
                         docker-compose -f ${COMPOSE_FILE} up -d --build
@@ -77,7 +86,6 @@ pipeline {
         stage('Health Check') {
             steps {
                 script {
-                    // Wait for service to be ready and perform health check
                     sh '''
                         echo "Waiting for application to start..."
                         sleep 15
@@ -123,19 +131,11 @@ pipeline {
         stage('Cleanup') {
             steps {
                 script {
-                    // Clean up unused Docker resources
                     sh '''
                         echo "Cleaning up unused Docker resources..."
-                        
-                        # Remove unused images (keep recent ones)
                         docker image prune -f
-                        
-                        # Remove unused volumes (be careful with this)
                         docker volume prune -f
-                        
-                        # Remove unused networks
                         docker network prune -f
-                        
                         echo "Cleanup completed"
                     '''
                 }
@@ -146,10 +146,13 @@ pipeline {
     post {
         always {
             script {
-                // Show deployment status
                 sh '''
                     echo "=== Deployment Status ==="
                     docker-compose -f ${COMPOSE_FILE} ps
+                    
+                    # Clean up .env file for security
+                    rm -f .env
+                    echo ".env file cleaned up"
                 '''
             }
         }
@@ -186,9 +189,12 @@ pipeline {
                     docker-compose -f ${COMPOSE_FILE} logs
                     echo ""
                     echo "=== Troubleshooting ==="
-                    echo "1. Check .env file configuration"
-                    echo "2. Verify Docker service is running"
+                    echo "1. Verify GROQ API key is configured in Jenkins credentials"
+                    echo "2. Check Docker service is running"
                     echo "3. Check port ${APP_PORT} availability"
+                    
+                    # Clean up .env file even on failure
+                    rm -f .env
                 '''
             }
         }
