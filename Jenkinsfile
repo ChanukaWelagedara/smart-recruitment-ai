@@ -31,6 +31,9 @@ EOF
                         echo "Stopping existing Docker container..."
                         docker-compose down || true
                         
+                        echo "Cleaning up Docker system to free space..."
+                        docker-compose down --rmi all --volumes --remove-orphans || true
+                        
                         echo "Building Docker image without cache..."
                         docker-compose build --no-cache
                         
